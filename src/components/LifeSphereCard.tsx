@@ -25,6 +25,9 @@ interface LifeSphereCardProps {
 }
 
 export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCardProps) {
+  // Extract the border color from the className to use it for goal cards
+  const borderColorClass = className?.split(' ').find(cls => cls.startsWith('border-')) || '';
+
   return (
     <Card className={cn("h-full transition-all hover:shadow-lg border-2", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -40,7 +43,13 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
       <CardContent>
         <div className="space-y-4">
           {goals.map((goal) => (
-            <div key={goal.id} className="space-y-2">
+            <div 
+              key={goal.id} 
+              className={cn(
+                "rounded-lg border bg-white p-4 shadow-sm",
+                borderColorClass
+              )}
+            >
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">{goal.name}</h4>
                 <span className="text-xs text-muted-foreground">
@@ -48,11 +57,11 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                 </span>
               </div>
               {goal.habits.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="mt-3 space-y-2">
                   {goal.habits.map((habit) => (
                     <li
                       key={habit.id}
-                      className="flex items-center justify-between rounded-lg bg-white/80 p-2 text-sm"
+                      className="flex items-center justify-between rounded-lg bg-white/80 p-2 text-sm border border-muted"
                     >
                       <span>{habit.name}</span>
                       {habit.frequency ? (
@@ -66,7 +75,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                   ))}
                 </ul>
               ) : (
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full mt-3">
                   Add a Habit
                 </Button>
               )}
