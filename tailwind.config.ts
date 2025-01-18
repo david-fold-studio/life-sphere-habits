@@ -9,6 +9,11 @@ export default {
     './src/**/*.{ts,tsx}',
   ],
   theme: {
+    screens: {
+      'md': '500px',
+      'lg': '1024px',
+      '2xl': '1400px',
+    },
     container: {
       center: true,
       padding: "2rem",
