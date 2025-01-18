@@ -32,8 +32,8 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
         <div className="flex flex-col gap-6">
           <SphereTitleSection icon={icon} title={title} />
           
-          {/* Goals Grid Container - 1 column on mobile, 2 on desktop */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:w-2/3">
+          {/* Goals Grid Container - 1 column on mobile, 2 on tablet, 2 on desktop (in remaining 2/3 space) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:w-2/3">
             {goals.slice(0, 2).map((goal) => (
               <GoalCard
                 key={goal.id}
