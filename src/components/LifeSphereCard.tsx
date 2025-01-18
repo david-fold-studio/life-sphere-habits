@@ -48,10 +48,17 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
             {goals[0] && (
               <div 
                 className={cn(
-                  "rounded-lg border bg-white p-4 shadow-sm h-full",
+                  "rounded-lg border bg-white p-4 shadow-sm h-full relative",
                   borderColorClass
                 )}
               >
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 h-6 w-6"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
                 <div className="flex flex-col h-full">
                   <div className="mb-3">
                     <h4 className="font-medium">{goals[0].name}</h4>
@@ -60,7 +67,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                     </span>
                   </div>
                   <div className="flex-grow">
-                    {goals[0].habits.length > 0 ? (
+                    {goals[0].habits.length > 0 && (
                       <ul className="space-y-2">
                         {goals[0].habits.map((habit) => (
                           <li
@@ -76,10 +83,6 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <Button variant="outline" size="sm" className="w-full h-6 px-2 text-xs">
-                        Add a Habit
-                      </Button>
                     )}
                   </div>
                 </div>
@@ -92,10 +95,17 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
             {goals[1] && (
               <div 
                 className={cn(
-                  "rounded-lg border bg-white p-4 shadow-sm h-full",
+                  "rounded-lg border bg-white p-4 shadow-sm h-full relative",
                   borderColorClass
                 )}
               >
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 h-6 w-6"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
                 <div className="flex flex-col h-full">
                   <div className="mb-3">
                     <h4 className="font-medium">{goals[1].name}</h4>
@@ -104,7 +114,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                     </span>
                   </div>
                   <div className="flex-grow">
-                    {goals[1].habits.length > 0 ? (
+                    {goals[1].habits.length > 0 && (
                       <ul className="space-y-2">
                         {goals[1].habits.map((habit) => (
                           <li
@@ -120,10 +130,6 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                           </li>
                         ))}
                       </ul>
-                    ) : (
-                      <Button variant="outline" size="sm" className="w-full h-6 px-2 text-xs">
-                        Add a Habit
-                      </Button>
                     )}
                   </div>
                 </div>
