@@ -58,6 +58,15 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        sphere: {
+          health: '#FFDEE2',     // Soft Pink for Health & Fitness
+          mental: '#E5DEFF',     // Soft Purple for Mental Wellbeing
+          relationships: '#D3E4FD', // Soft Blue for Relationships
+          career: '#FEC6A1',     // Soft Orange for Career & Work
+          personal: '#F2FCE2',   // Soft Green for Personal Growth
+          education: '#FEF7CD',  // Soft Yellow for Education
+          environment: '#FDE1D3', // Soft Peach for Environment
+        }
       },
       borderColor: {
         'rose-25': '#ffe4e6',

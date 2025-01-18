@@ -2,13 +2,48 @@ import { Card } from "@/components/ui/card";
 import { format, addHours, startOfDay, startOfWeek, addDays } from "date-fns";
 
 const CalendarView = () => {
-  // Sample scheduled habits with fixed times
+  // Sample scheduled habits with fixed times and their associated spheres
   const scheduledHabits = [
-    { id: "1", name: "Morning Meditation", startTime: "07:00", endTime: "07:30", day: 1 },
-    { id: "2", name: "Evening Run", startTime: "18:00", endTime: "19:00", day: 2 },
-    { id: "3", name: "Read a Book", startTime: "20:00", endTime: "21:00", day: 3 },
-    { id: "4", name: "Yoga Session", startTime: "08:00", endTime: "09:00", day: 4 },
-    { id: "5", name: "Journal Writing", startTime: "21:00", endTime: "21:30", day: 5 },
+    { 
+      id: "1", 
+      name: "Morning Meditation", 
+      startTime: "07:00", 
+      endTime: "07:30", 
+      day: 1,
+      sphere: "mental" 
+    },
+    { 
+      id: "2", 
+      name: "Evening Run", 
+      startTime: "18:00", 
+      endTime: "19:00", 
+      day: 2,
+      sphere: "health"
+    },
+    { 
+      id: "3", 
+      name: "Read a Book", 
+      startTime: "20:00", 
+      endTime: "21:00", 
+      day: 3,
+      sphere: "education"
+    },
+    { 
+      id: "4", 
+      name: "Yoga Session", 
+      startTime: "08:00", 
+      endTime: "09:00", 
+      day: 4,
+      sphere: "health"
+    },
+    { 
+      id: "5", 
+      name: "Journal Writing", 
+      startTime: "21:00", 
+      endTime: "21:30", 
+      day: 5,
+      sphere: "personal"
+    },
   ];
 
   const today = new Date();
@@ -84,7 +119,7 @@ const CalendarView = () => {
                   .map((habit) => (
                     <Card
                       key={habit.id}
-                      className="absolute left-0 right-0 mx-1 p-2 bg-blue-50 border-blue-200"
+                      className={`absolute left-0 right-0 mx-1 p-2 bg-sphere-${habit.sphere} border-${habit.sphere}-200`}
                       style={getEventStyle(habit.startTime)}
                     >
                       <div className="font-medium text-sm">{habit.name}</div>
