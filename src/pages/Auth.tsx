@@ -14,6 +14,7 @@ const Auth = () => {
 
   useEffect(() => {
     console.log("Auth component mounted, current user:", user);
+    console.log("Current session:", supabase.auth.getSession());
     
     if (user) {
       console.log("User already authenticated, navigating to home");
@@ -26,30 +27,46 @@ const Auth = () => {
       if (event === 'SIGNED_IN') {
         console.log("Sign in successful, session:", session);
         try {
-          const { data: { user: { app_metadata } }, error: userError } = await supabase.auth.getUser();
-          console.log("User metadata:", app_metadata);
-          
-          if (userError) {
-            console.error("Error fetching user:", userError);
-            setErrorMessage(getErrorMessage(userError));
-            return;
-          }
+          // First, verify the session is valid
+          const { data: currentSession, error: sessionError } = await supabase.auth.getSession();
+          console.log("Current session after sign in:", currentSession);
 
-          // Ensure we have a valid session before navigating
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) {
             console.error("Session error:", sessionError);
             setErrorMessage(getErrorMessage(sessionError));
             return;
           }
 
-          if (sessionData.session) {
-            console.log("Valid session found, navigating to home");
-            navigate("/");
-          } else {
+          if (!currentSession.session) {
             console.error("No valid session found after sign in");
             setErrorMessage("Authentication failed: No valid session");
+            return;
           }
+
+          // Then get the user data
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          console.log("User data:", userData);
+
+          if (userError) {
+            console.error("Error fetching user:", userError);
+            setErrorMessage(getErrorMessage(userError));
+            return;
+          }
+
+          // Verify we have the necessary OAuth tokens
+          const provider = currentSession.session.user.app_metadata.provider;
+          const tokens = currentSession.session.provider_token;
+          console.log("Auth provider:", provider);
+          console.log("Provider tokens:", tokens);
+
+          if (!tokens && provider === 'google') {
+            console.error("No provider tokens found for Google auth");
+            setErrorMessage("Failed to get Google Calendar access. Please try again.");
+            return;
+          }
+
+          console.log("Authentication successful, navigating to home");
+          navigate("/");
         } catch (error) {
           console.error("Error during sign in process:", error);
           setErrorMessage("An unexpected error occurred during sign in");
@@ -61,12 +78,8 @@ const Auth = () => {
         setErrorMessage("");
       }
 
-      if (event === 'USER_UPDATED' || event === 'SIGNED_IN') {
-        const { error } = await supabase.auth.getSession();
-        if (error) {
-          console.error("Detailed auth error:", error);
-          setErrorMessage(getErrorMessage(error));
-        }
+      if (event === 'USER_UPDATED') {
+        console.log("User updated event received");
       }
     });
 
