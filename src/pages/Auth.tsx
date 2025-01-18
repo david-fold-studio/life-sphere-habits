@@ -13,25 +13,26 @@ const Auth = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
-    // Redirect to home if user is already logged in
     if (user) {
       navigate("/");
     }
 
-    // Listen for auth state changes and handle errors
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
+      console.log("Auth state changed:", event, session);
+      
       if (event === 'SIGNED_IN') {
         console.log("Sign in successful:", session);
       }
+      
       if (event === 'SIGNED_OUT') {
-        setErrorMessage(""); // Clear errors on sign out
+        setErrorMessage("");
       }
+
       // Log any errors that occur during the auth process
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') {
         const { error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Auth error:", error);
+          console.error("Detailed auth error:", error);
           setErrorMessage(getErrorMessage(error));
         }
       }
@@ -46,16 +47,16 @@ const Auth = () => {
     if (error instanceof AuthApiError) {
       switch (error.status) {
         case 400:
-          return 'Invalid request. Please check your credentials and try again.';
+          return `Invalid request: ${error.message}`;
         case 401:
-          return 'Unauthorized. Please check your credentials.';
+          return `Authentication failed: ${error.message}`;
         case 404:
           return 'User not found.';
         default:
-          return `Authentication error: ${error.message}`;
+          return `Authentication error (${error.status}): ${error.message}`;
       }
     }
-    return error.message;
+    return `Error: ${error.message}`;
   };
 
   return (
