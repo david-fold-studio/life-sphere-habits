@@ -77,7 +77,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                         ))}
                       </ul>
                     ) : (
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full h-6 px-2 text-xs">
                         Add a Habit
                       </Button>
                     )}
@@ -121,7 +121,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                         ))}
                       </ul>
                     ) : (
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full h-6 px-2 text-xs">
                         Add a Habit
                       </Button>
                     )}
