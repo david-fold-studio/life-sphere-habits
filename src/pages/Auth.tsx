@@ -22,13 +22,15 @@ const Auth = () => {
       
       if (event === 'SIGNED_IN') {
         console.log("Sign in successful:", session);
+        // Check if we have calendar access token
+        const { data: { user: { app_metadata } } } = await supabase.auth.getUser();
+        console.log("User metadata:", app_metadata);
       }
       
       if (event === 'SIGNED_OUT') {
         setErrorMessage("");
       }
 
-      // Log any errors that occur during the auth process
       if (event === 'USER_UPDATED' || event === 'SIGNED_IN') {
         const { error } = await supabase.auth.getSession();
         if (error) {
@@ -88,6 +90,11 @@ const Auth = () => {
               },
             }}
             providers={["google"]}
+            queryParams={{
+              access_type: 'offline',
+              prompt: 'consent',
+              scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.settings.readonly',
+            }}
           />
         </div>
       </div>
