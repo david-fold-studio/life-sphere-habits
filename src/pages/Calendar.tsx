@@ -119,8 +119,11 @@ const CalendarView = () => {
                   .map((habit) => (
                     <Card
                       key={habit.id}
-                      className={`absolute left-0 right-0 mx-1 p-2 bg-sphere-${habit.sphere} border-${habit.sphere}-200`}
-                      style={getEventStyle(habit.startTime)}
+                      className={`absolute left-0 right-0 mx-1 p-2`}
+                      style={{
+                        ...getEventStyle(habit.startTime),
+                        backgroundColor: `var(--sphere-${habit.sphere})`,
+                      }}
                     >
                       <div className="font-medium text-sm">{habit.name}</div>
                       <div className="text-xs text-muted-foreground">
