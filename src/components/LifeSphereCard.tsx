@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Plus } from "lucide-react";
 
 interface Habit {
   id: string;
@@ -26,9 +27,15 @@ interface LifeSphereCardProps {
 export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCardProps) {
   return (
     <Card className={cn("h-full transition-all hover:shadow-lg border-2", className)}>
-      <CardHeader className="flex flex-row items-center gap-2 pb-2">
-        <div className="rounded-full bg-white p-2">{icon}</div>
-        <h3 className="font-semibold">{title}</h3>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-white p-2">{icon}</div>
+          <h3 className="font-semibold">{title}</h3>
+        </div>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Plus className="h-4 w-4" />
+          <span className="sr-only">Add Goal</span>
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
