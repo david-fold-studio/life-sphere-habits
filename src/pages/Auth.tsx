@@ -13,7 +13,10 @@ const Auth = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
+    console.log("Auth component mounted, current user:", user);
+    
     if (user) {
+      console.log("User already authenticated, navigating to home");
       navigate("/");
     }
 
@@ -21,13 +24,40 @@ const Auth = () => {
       console.log("Auth state changed:", event, session);
       
       if (event === 'SIGNED_IN') {
-        console.log("Sign in successful:", session);
-        // Check if we have calendar access token
-        const { data: { user: { app_metadata } } } = await supabase.auth.getUser();
-        console.log("User metadata:", app_metadata);
+        console.log("Sign in successful, session:", session);
+        try {
+          const { data: { user: { app_metadata } }, error: userError } = await supabase.auth.getUser();
+          console.log("User metadata:", app_metadata);
+          
+          if (userError) {
+            console.error("Error fetching user:", userError);
+            setErrorMessage(getErrorMessage(userError));
+            return;
+          }
+
+          // Ensure we have a valid session before navigating
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            console.error("Session error:", sessionError);
+            setErrorMessage(getErrorMessage(sessionError));
+            return;
+          }
+
+          if (sessionData.session) {
+            console.log("Valid session found, navigating to home");
+            navigate("/");
+          } else {
+            console.error("No valid session found after sign in");
+            setErrorMessage("Authentication failed: No valid session");
+          }
+        } catch (error) {
+          console.error("Error during sign in process:", error);
+          setErrorMessage("An unexpected error occurred during sign in");
+        }
       }
       
       if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
         setErrorMessage("");
       }
 
@@ -40,7 +70,10 @@ const Auth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Auth component unmounting");
+      subscription.unsubscribe();
+    };
   }, [user, navigate]);
 
   const getErrorMessage = (error: AuthError) => {
