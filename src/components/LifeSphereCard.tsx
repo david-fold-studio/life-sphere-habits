@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Habit {
   id: string;
@@ -30,20 +31,24 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
   return (
     <Card className={cn("transition-all hover:shadow-lg border-2", className)}>
       <CardContent className="p-6">
-        <div className="grid grid-cols-3 gap-6">
-          {/* Column 1: Sphere Info */}
-          <div className="space-y-4">
+        {/* Responsive Layout Container */}
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-6">
+          {/* Sphere Info - Full width on mobile, first column on desktop */}
+          <div className="flex md:flex-col items-center md:items-start justify-between md:space-y-4">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-white p-2">{icon}</div>
               <h3 className="font-semibold">{title}</h3>
             </div>
-            <Button variant="ghost" size="sm" className="w-full">
+            <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden">
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="hidden md:inline-flex w-full">
               <Plus className="h-4 w-4 mr-2" />
               Add Goal
             </Button>
           </div>
 
-          {/* Column 2: First Goal */}
+          {/* First Goal */}
           <div>
             {goals[0] && (
               <div 
@@ -90,7 +95,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
             )}
           </div>
 
-          {/* Column 3: Second Goal */}
+          {/* Second Goal */}
           <div>
             {goals[1] && (
               <div 
