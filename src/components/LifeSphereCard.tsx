@@ -19,7 +19,7 @@ export function LifeSphereCard({ title, icon, habits, className }: LifeSphereCar
   return (
     <Card className={cn("h-full transition-all hover:shadow-lg", className)}>
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
-        <div className="rounded-full bg-primary/10 p-2 text-primary">{icon}</div>
+        <div className="rounded-full bg-white/50 p-2">{icon}</div>
         <h3 className="font-semibold">{title}</h3>
       </CardHeader>
       <CardContent>
@@ -27,7 +27,7 @@ export function LifeSphereCard({ title, icon, habits, className }: LifeSphereCar
           {habits.map((habit) => (
             <li
               key={habit.id}
-              className="flex items-center justify-between rounded-lg bg-muted/50 p-2 text-sm"
+              className="flex items-center justify-between rounded-lg bg-white/50 p-2 text-sm"
             >
               <span>{habit.name}</span>
               {habit.frequency ? (

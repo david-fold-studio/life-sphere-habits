@@ -6,6 +6,7 @@ const spheresData = [
     id: "health",
     title: "Health & Fitness",
     icon: <Heart className="h-5 w-5" />,
+    color: "from-rose-100 to-rose-200",
     habits: [
       { id: "1", name: "Morning Exercise", frequency: "Every weekday" },
       { id: "2", name: "Meditation", frequency: "Daily" },
@@ -16,6 +17,7 @@ const spheresData = [
     id: "mental",
     title: "Mental Wellbeing",
     icon: <Brain className="h-5 w-5" />,
+    color: "from-purple-100 to-purple-200",
     habits: [
       { id: "4", name: "Journaling", frequency: "Daily" },
       { id: "5", name: "Therapy Session", frequency: "Bi-weekly" },
@@ -26,6 +28,7 @@ const spheresData = [
     id: "relationships",
     title: "Relationships",
     icon: <Users className="h-5 w-5" />,
+    color: "from-blue-100 to-blue-200",
     habits: [
       { id: "7", name: "Family Dinner", frequency: "Weekly" },
       { id: "8", name: "Date Night", frequency: "Bi-weekly" },
@@ -36,6 +39,7 @@ const spheresData = [
     id: "career",
     title: "Career & Work",
     icon: <Briefcase className="h-5 w-5" />,
+    color: "from-amber-100 to-amber-200",
     habits: [
       { id: "10", name: "Skill Development", frequency: "Weekly" },
       { id: "11", name: "Networking", frequency: "Monthly" },
@@ -46,6 +50,7 @@ const spheresData = [
     id: "personal",
     title: "Personal Growth",
     icon: <Gem className="h-5 w-5" />,
+    color: "from-emerald-100 to-emerald-200",
     habits: [
       { id: "13", name: "Reading", frequency: "Daily" },
       { id: "14", name: "Learning Language", frequency: "Weekly" },
@@ -56,6 +61,7 @@ const spheresData = [
     id: "education",
     title: "Education",
     icon: <Book className="h-5 w-5" />,
+    color: "from-cyan-100 to-cyan-200",
     habits: [
       { id: "16", name: "Online Course", frequency: "Weekly" },
       { id: "17", name: "Study Session", frequency: "Every weekday" },
@@ -66,6 +72,7 @@ const spheresData = [
     id: "environment",
     title: "Environment",
     icon: <Leaf className="h-5 w-5" />,
+    color: "from-teal-100 to-teal-200",
     habits: [
       { id: "19", name: "Recycling", frequency: "Daily" },
       { id: "20", name: "Garden Care", frequency: "Weekly" },
@@ -76,13 +83,14 @@ const spheresData = [
 
 export function LifeSpheresGrid() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {spheresData.map((sphere) => (
         <LifeSphereCard
           key={sphere.id}
           title={sphere.title}
           icon={sphere.icon}
           habits={sphere.habits}
+          className={`bg-gradient-to-br ${sphere.color}`}
         />
       ))}
     </div>
