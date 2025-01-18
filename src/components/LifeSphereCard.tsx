@@ -71,7 +71,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                             {habit.frequency ? (
                               <span className="text-xs text-muted-foreground">{habit.frequency}</span>
                             ) : (
-                              <Button variant="secondary" size="sm">Schedule</Button>
+                              <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">Schedule</Button>
                             )}
                           </li>
                         ))}
@@ -115,7 +115,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                             {habit.frequency ? (
                               <span className="text-xs text-muted-foreground">{habit.frequency}</span>
                             ) : (
-                              <Button variant="secondary" size="sm">Schedule</Button>
+                              <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">Schedule</Button>
                             )}
                           </li>
                         ))}
