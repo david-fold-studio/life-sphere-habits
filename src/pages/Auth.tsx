@@ -43,18 +43,6 @@ const Auth = () => {
         }
 
         try {
-          // Verify we have the necessary OAuth tokens
-          const provider = session.user.app_metadata.provider;
-          const tokens = session.provider_token;
-          console.log("Auth provider:", provider);
-          console.log("Provider tokens:", tokens);
-
-          if (!tokens && provider === 'google') {
-            console.error("No provider tokens found for Google auth");
-            setErrorMessage("Failed to get Google Calendar access. Please try again.");
-            return;
-          }
-
           console.log("Authentication successful, navigating to home");
           navigate("/");
         } catch (error) {
@@ -124,11 +112,8 @@ const Auth = () => {
             providers={["google"]}
             view="sign_in"
             showLinks={false}
-            queryParams={{
-              access_type: 'offline',
-              prompt: 'consent',
-              scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.settings.readonly',
-            }}
+            onlyThirdPartyProviders={true}
+            redirectTo={window.location.origin}
           />
         </div>
       </div>
