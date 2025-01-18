@@ -122,6 +122,8 @@ const Auth = () => {
               },
             }}
             providers={["google"]}
+            view="sign_in"
+            showLinks={false}
             queryParams={{
               access_type: 'offline',
               prompt: 'consent',
