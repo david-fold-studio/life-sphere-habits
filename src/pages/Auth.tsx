@@ -13,49 +13,39 @@ const Auth = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   useEffect(() => {
-    console.log("Auth component mounted, current user:", user);
-    console.log("Current session:", supabase.auth.getSession());
-    
-    if (user) {
-      console.log("User already authenticated, navigating to home");
-      navigate("/");
-    }
+    const checkSession = async () => {
+      console.log("Auth component mounted, current user:", user);
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log("Initial session check:", session);
+      
+      if (error) {
+        console.error("Session check error:", error);
+        return;
+      }
+
+      if (session) {
+        console.log("Valid session found, navigating to home");
+        navigate("/");
+      }
+    };
+
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       
       if (event === 'SIGNED_IN') {
         console.log("Sign in successful, session:", session);
+        if (!session) {
+          console.error("No session data available after sign in");
+          setErrorMessage("Authentication failed: No session data");
+          return;
+        }
+
         try {
-          // First, verify the session is valid
-          const { data: currentSession, error: sessionError } = await supabase.auth.getSession();
-          console.log("Current session after sign in:", currentSession);
-
-          if (sessionError) {
-            console.error("Session error:", sessionError);
-            setErrorMessage(getErrorMessage(sessionError));
-            return;
-          }
-
-          if (!currentSession.session) {
-            console.error("No valid session found after sign in");
-            setErrorMessage("Authentication failed: No valid session");
-            return;
-          }
-
-          // Then get the user data
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          console.log("User data:", userData);
-
-          if (userError) {
-            console.error("Error fetching user:", userError);
-            setErrorMessage(getErrorMessage(userError));
-            return;
-          }
-
           // Verify we have the necessary OAuth tokens
-          const provider = currentSession.session.user.app_metadata.provider;
-          const tokens = currentSession.session.provider_token;
+          const provider = session.user.app_metadata.provider;
+          const tokens = session.provider_token;
           console.log("Auth provider:", provider);
           console.log("Provider tokens:", tokens);
 
@@ -76,10 +66,6 @@ const Auth = () => {
       if (event === 'SIGNED_OUT') {
         console.log("User signed out");
         setErrorMessage("");
-      }
-
-      if (event === 'USER_UPDATED') {
-        console.log("User updated event received");
       }
     });
 
