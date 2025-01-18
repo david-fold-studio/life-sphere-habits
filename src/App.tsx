@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CalendarView from "./pages/Calendar";
+import Settings from "./pages/Settings";
+import Today from "./pages/Today";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -64,7 +66,7 @@ const App = () => (
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <Index />
+                    <Today />
                   </ProtectedRoute>
                 }
               />
@@ -81,6 +83,22 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <CalendarView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/today"
+                element={
+                  <ProtectedRoute>
+                    <Today />
                   </ProtectedRoute>
                 }
               />
