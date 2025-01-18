@@ -1,16 +1,43 @@
 import { Heart, Brain, Users, Briefcase, Gem, Book, Leaf } from "lucide-react";
 import { LifeSphereCard } from "./LifeSphereCard";
 
+interface Habit {
+  id: string;
+  name: string;
+  frequency?: string;
+}
+
+interface Goal {
+  id: string;
+  name: string;
+  targetDate: string;
+  habits: Habit[];
+}
+
 const spheresData = [
   {
     id: "health",
     title: "Health & Fitness",
     icon: <Heart className="h-5 w-5" />,
     color: "border-rose-25 bg-rose-5",
-    habits: [
-      { id: "1", name: "Morning Exercise", frequency: "Every weekday" },
-      { id: "2", name: "Meditation", frequency: "Daily" },
-      { id: "3", name: "Meal Planning" },
+    goals: [
+      {
+        id: "g1",
+        name: "Get in Shape",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "1", name: "Morning Exercise", frequency: "Every weekday" },
+          { id: "2", name: "Meditation", frequency: "Daily" },
+        ],
+      },
+      {
+        id: "g2",
+        name: "Improve Diet",
+        targetDate: "2024-06-30",
+        habits: [
+          { id: "3", name: "Meal Planning" },
+        ],
+      },
     ],
   },
   {
@@ -18,10 +45,24 @@ const spheresData = [
     title: "Mental Wellbeing",
     icon: <Brain className="h-5 w-5" />,
     color: "border-purple-25 bg-purple-5",
-    habits: [
-      { id: "4", name: "Journaling", frequency: "Daily" },
-      { id: "5", name: "Therapy Session", frequency: "Bi-weekly" },
-      { id: "6", name: "Digital Detox" },
+    goals: [
+      {
+        id: "g3",
+        name: "Reduce Stress",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "4", name: "Journaling", frequency: "Daily" },
+          { id: "5", name: "Therapy Session", frequency: "Bi-weekly" },
+        ],
+      },
+      {
+        id: "g4",
+        name: "Digital Balance",
+        targetDate: "2024-06-30",
+        habits: [
+          { id: "6", name: "Digital Detox" },
+        ],
+      },
     ],
   },
   {
@@ -29,10 +70,24 @@ const spheresData = [
     title: "Relationships",
     icon: <Users className="h-5 w-5" />,
     color: "border-blue-25 bg-blue-5",
-    habits: [
-      { id: "7", name: "Family Dinner", frequency: "Weekly" },
-      { id: "8", name: "Date Night", frequency: "Bi-weekly" },
-      { id: "9", name: "Call Parents" },
+    goals: [
+      {
+        id: "g5",
+        name: "Strengthen Family Bonds",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "7", name: "Family Dinner", frequency: "Weekly" },
+          { id: "8", name: "Call Parents" },
+        ],
+      },
+      {
+        id: "g6",
+        name: "Nurture Partnership",
+        targetDate: "2024-06-30",
+        habits: [
+          { id: "9", name: "Date Night", frequency: "Bi-weekly" },
+        ],
+      },
     ],
   },
   {
@@ -40,10 +95,22 @@ const spheresData = [
     title: "Career & Work",
     icon: <Briefcase className="h-5 w-5" />,
     color: "border-amber-25 bg-amber-5",
-    habits: [
-      { id: "10", name: "Skill Development", frequency: "Weekly" },
-      { id: "11", name: "Networking", frequency: "Monthly" },
-      { id: "12", name: "Goal Review" },
+    goals: [
+      {
+        id: "g7",
+        name: "Professional Development",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "10", name: "Skill Development", frequency: "Weekly" },
+          { id: "11", name: "Networking", frequency: "Monthly" },
+        ],
+      },
+      {
+        id: "g8",
+        name: "Career Planning",
+        targetDate: "2024-06-30",
+        habits: [],
+      },
     ],
   },
   {
@@ -51,10 +118,24 @@ const spheresData = [
     title: "Personal Growth",
     icon: <Gem className="h-5 w-5" />,
     color: "border-emerald-25 bg-emerald-5",
-    habits: [
-      { id: "13", name: "Reading", frequency: "Daily" },
-      { id: "14", name: "Learning Language", frequency: "Weekly" },
-      { id: "15", name: "Self-reflection" },
+    goals: [
+      {
+        id: "g9",
+        name: "Self-Improvement",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "13", name: "Reading", frequency: "Daily" },
+          { id: "14", name: "Learning Language", frequency: "Weekly" },
+        ],
+      },
+      {
+        id: "g10",
+        name: "Personal Reflection",
+        targetDate: "2024-06-30",
+        habits: [
+          { id: "15", name: "Self-reflection" },
+        ],
+      },
     ],
   },
   {
@@ -62,10 +143,22 @@ const spheresData = [
     title: "Education",
     icon: <Book className="h-5 w-5" />,
     color: "border-cyan-25 bg-cyan-5",
-    habits: [
-      { id: "16", name: "Online Course", frequency: "Weekly" },
-      { id: "17", name: "Study Session", frequency: "Every weekday" },
-      { id: "18", name: "Research" },
+    goals: [
+      {
+        id: "g11",
+        name: "Continuous Learning",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "16", name: "Online Course", frequency: "Weekly" },
+          { id: "17", name: "Study Session", frequency: "Every weekday" },
+        ],
+      },
+      {
+        id: "g12",
+        name: "Research Projects",
+        targetDate: "2024-06-30",
+        habits: [],
+      },
     ],
   },
   {
@@ -73,10 +166,24 @@ const spheresData = [
     title: "Environment",
     icon: <Leaf className="h-5 w-5" />,
     color: "border-teal-25 bg-teal-5",
-    habits: [
-      { id: "19", name: "Recycling", frequency: "Daily" },
-      { id: "20", name: "Garden Care", frequency: "Weekly" },
-      { id: "21", name: "Eco-audit" },
+    goals: [
+      {
+        id: "g13",
+        name: "Sustainable Living",
+        targetDate: "2024-12-31",
+        habits: [
+          { id: "19", name: "Recycling", frequency: "Daily" },
+          { id: "20", name: "Garden Care", frequency: "Weekly" },
+        ],
+      },
+      {
+        id: "g14",
+        name: "Environmental Impact",
+        targetDate: "2024-06-30",
+        habits: [
+          { id: "21", name: "Eco-audit" },
+        ],
+      },
     ],
   },
 ];
@@ -89,7 +196,7 @@ export function LifeSpheresGrid() {
           key={sphere.id}
           title={sphere.title}
           icon={sphere.icon}
-          habits={sphere.habits}
+          goals={sphere.goals}
           className={sphere.color}
         />
       ))}
