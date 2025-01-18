@@ -14,12 +14,12 @@ import {
 const items = [
   {
     title: "Today",
-    url: "/today",
+    url: "/",
     icon: CircleDot,
   },
   {
     title: "Spheres",
-    url: "/",
+    url: "/spheres",
     icon: CircleDot,
   },
   {

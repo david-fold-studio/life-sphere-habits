@@ -22,6 +22,7 @@ const App = () => (
               <SidebarTrigger className="m-4" />
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/spheres" element={<Index />} />
               </Routes>
             </main>
           </div>
