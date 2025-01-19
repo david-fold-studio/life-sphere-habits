@@ -1,17 +1,15 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek } from "date-fns";
+import { format, addHours, startOfDay, startOfWeek, addDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { CalendarHeader } from "@/components/calendar/CalendarHeader";
-import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 
 const CalendarView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const today = new Date();
-  const weekStart = startOfWeek(today);
 
   const { data: calendarToken, isLoading } = useQuery({
     queryKey: ['calendar-token', user?.id],
@@ -130,6 +128,31 @@ const CalendarView = () => {
     },
   ];
 
+  const today = new Date();
+  const weekStart = startOfWeek(today);
+  
+  const timeSlots = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    label: format(addHours(startOfDay(today), i), "h:mm a"),
+  }));
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(weekStart, i);
+    return {
+      date,
+      dayName: format(date, "EEE"),
+      fullDate: format(date, "MMM d"),
+    };
+  });
+
+  const getEventStyle = (startTime: string) => {
+    const [hours, minutes] = startTime.split(":").map(Number);
+    const top = (hours * 60 + minutes) * (100 / 1440);
+    return {
+      top: `${top}%`,
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -140,11 +163,70 @@ const CalendarView = () => {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <CalendarHeader 
-        weekStart={weekStart}
-        onConnectCalendar={handleConnectCalendar}
-      />
-      <CalendarGrid scheduledHabits={scheduledHabits} />
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Weekly Schedule</h1>
+          <p className="text-muted-foreground">
+            Week of {format(weekStart, "MMMM d, yyyy")}
+          </p>
+        </div>
+        
+        <Button 
+          onClick={handleConnectCalendar}
+          className="relative"
+        >
+          Connect Google Calendar
+        </Button>
+      </header>
+
+      <div className="flex">
+        <div className="w-20 flex-shrink-0">
+          <div className="h-16" />
+          {timeSlots.map(({ hour, label }) => (
+            <div key={hour} className="h-20 border-t text-sm text-muted-foreground pr-2 text-right">
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex-grow flex">
+          {weekDays.map(({ date, dayName, fullDate }, dayIndex) => (
+            <div key={dayIndex} className="flex-1 relative border-l first:border-l-0">
+              <div className="h-16 border-b p-2 text-center sticky top-0 bg-background">
+                <div className="font-semibold">{dayName}</div>
+                <div className="text-sm text-muted-foreground">{fullDate}</div>
+              </div>
+
+              <div className="relative">
+                {timeSlots.map(({ hour }) => (
+                  <div
+                    key={hour}
+                    className="h-20 border-t border-gray-200"
+                  />
+                ))}
+
+                {scheduledHabits
+                  .filter((habit) => habit.day === dayIndex)
+                  .map((habit) => (
+                    <Card
+                      key={habit.id}
+                      className={`absolute left-0 right-0 mx-1 p-2`}
+                      style={{
+                        ...getEventStyle(habit.startTime),
+                        backgroundColor: `var(--sphere-${habit.sphere})`,
+                      }}
+                    >
+                      <div className="font-medium text-sm">{habit.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {habit.startTime} - {habit.endTime}
+                      </div>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
