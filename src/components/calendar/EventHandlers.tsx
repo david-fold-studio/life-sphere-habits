@@ -39,16 +39,18 @@ export const useEventHandlers = ({
       return;
     }
 
-    // Stop event propagation to prevent double handling
-    e.stopPropagation();
-    
-    // Prevent text selection during drag
+    // Always prevent default to stop text selection
     e.preventDefault();
     
+    // If this is a resize operation
     if (type) {
       console.log('🔄 Starting resize operation:', type);
+      e.stopPropagation(); // Stop event from reaching the card
       setIsResizing(type);
-    } else if (!isResizing) { // Only start drag if not already resizing
+      setIsDragging(false); // Ensure we're not dragging
+    } 
+    // If this is a drag operation (and we're not already resizing)
+    else if (!isResizing) {
       console.log('✋ Starting drag operation');
       setIsDragging(true);
     }
@@ -63,34 +65,35 @@ export const useEventHandlers = ({
       originalEndTime: originalEndTime.current
     });
 
-    // Create mousemove handler before adding the listener
+    // Create mousemove handler
     const moveHandler = (e: MouseEvent) => {
+      const deltaY = e.clientY - dragStartY.current;
+      
+      // Handle resize operation
       if (isResizing) {
-        console.log('🔄 Resizing event:', { id, isResizing, sphere });
+        console.log('🔄 Resizing event:', { id, isResizing, deltaY });
         const { newStartTime, newEndTime } = calculateResizeTime(
           originalStartTime.current,
           originalEndTime.current,
-          e.clientY - dragStartY.current,
+          deltaY,
           isResizing
         );
         onEventUpdate(id, newStartTime, newEndTime);
-      } else if (isDragging) {
-        console.log('🚀 Dragging event:', { id, sphere });
+      } 
+      // Handle drag operation
+      else if (isDragging) {
+        console.log('🚀 Dragging event:', { id, deltaY });
         const { newStartTime, newEndTime } = calculateNewTimes(
           originalStartTime.current,
           originalEndTime.current,
-          e.clientY - dragStartY.current
+          deltaY
         );
         onEventUpdate(id, newStartTime, newEndTime);
-      } else {
-        console.log('⏭️ Mouse move ignored - not dragging or resizing');
       }
     };
 
-    // Store the handler reference
+    // Store the handler reference and add listeners
     mouseMoveHandler.current = moveHandler;
-    
-    // Add the event listeners
     document.addEventListener('mousemove', moveHandler);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -101,14 +104,14 @@ export const useEventHandlers = ({
       wasResizing: isResizing
     });
     
-    // Remove event listeners using the stored handler
+    // Remove event listeners
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
-    // Reset states after cleanup
+    // Reset states
     setIsDragging(false);
     setIsResizing(null);
   };
