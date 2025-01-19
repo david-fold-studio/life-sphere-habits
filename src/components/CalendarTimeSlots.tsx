@@ -14,7 +14,6 @@ export function CalendarTimeSlots() {
 
   return (
     <div className="w-20 flex-shrink-0">
-      <div className="h-16" /> {/* Header spacer */}
       {timeSlots.map(({ hour, label }) => (
         <div 
           key={hour} 

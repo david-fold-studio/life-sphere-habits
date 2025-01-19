@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, addDays } from "date-fns";
+import { startOfWeek, addDays, format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { CalendarHeader } from "@/components/CalendarHeader";
@@ -153,19 +153,33 @@ const CalendarView = () => {
       />
 
       <div className="flex-1 overflow-hidden">
-        <div className="flex h-full">
-          <div className="flex overflow-y-auto">
-            <CalendarTimeSlots />
-            <div className="flex flex-1">
-              {weekDays.map(({ date, dayIndex }) => (
-                <CalendarDayColumn
-                  key={dayIndex}
-                  date={date}
-                  dayIndex={dayIndex}
-                  scheduledHabits={scheduledHabits}
-                />
-              ))}
-            </div>
+        <div className="flex">
+          <div className="w-20 flex-shrink-0">
+            <div className="h-16" /> {/* Header spacer */}
+          </div>
+          <div className="flex flex-1">
+            {weekDays.map(({ date, dayIndex }) => (
+              <div key={dayIndex} className="flex-1 border-l first:border-l-0">
+                <div className="h-16 border-b p-2 text-center bg-background">
+                  <div className="font-semibold">{format(date, "EEE")}</div>
+                  <div className="text-sm text-muted-foreground">{format(date, "MMM d")}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex overflow-y-auto" style={{ height: 'calc(100% - 4rem)' }}>
+          <CalendarTimeSlots />
+          <div className="flex flex-1">
+            {weekDays.map(({ date, dayIndex }) => (
+              <CalendarDayColumn
+                key={dayIndex}
+                date={date}
+                dayIndex={dayIndex}
+                scheduledHabits={scheduledHabits}
+              />
+            ))}
           </div>
         </div>
       </div>

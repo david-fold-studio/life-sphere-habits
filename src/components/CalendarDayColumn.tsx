@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { CalendarEvent } from "./CalendarEvent";
 
 interface ScheduledHabit {
@@ -16,16 +15,11 @@ interface CalendarDayColumnProps {
   scheduledHabits: ScheduledHabit[];
 }
 
-export function CalendarDayColumn({ date, dayIndex, scheduledHabits }: CalendarDayColumnProps) {
+export function CalendarDayColumn({ dayIndex, scheduledHabits }: CalendarDayColumnProps) {
   const timeSlots = Array.from({ length: 24 }, (_, hour) => hour);
   
   return (
     <div className="flex-1 relative border-l first:border-l-0">
-      <div className="h-16 border-b p-2 text-center bg-background">
-        <div className="font-semibold">{format(date, "EEE")}</div>
-        <div className="text-sm text-muted-foreground">{format(date, "MMM d")}</div>
-      </div>
-
       <div className="relative">
         {timeSlots.map((hour) => (
           <div
