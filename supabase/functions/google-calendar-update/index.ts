@@ -21,7 +21,6 @@ serve(async (req) => {
       throw new Error('Missing required parameters');
     }
 
-    // Get the user's token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -37,21 +36,51 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Parse the date string and time strings
+    // Parse the date and times
     const baseDate = new Date(date);
     if (isNaN(baseDate.getTime())) {
       throw new Error('Invalid date format provided');
     }
 
-    // Convert time strings to Date objects
+    // Convert time strings to hours and minutes
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
     
+    // Create new Date objects for start and end times using the original date
     const startDate = new Date(baseDate);
-    const endDate = new Date(baseDate);
-    
     startDate.setHours(startHours, startMinutes, 0);
+    
+    const endDate = new Date(baseDate);
     endDate.setHours(endHours, endMinutes, 0);
+
+    // Get the user's timezone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log('User timezone:', userTimeZone);
+
+    // Format dates in ISO format with the user's timezone
+    const startDateTime = startDate.toLocaleString('en-US', {
+      timeZone: userTimeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6');
+
+    const endDateTime = endDate.toLocaleString('en-US', {
+      timeZone: userTimeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6');
+
+    console.log('Formatted dates:', { startDateTime, endDateTime });
 
     // Validate times
     if (startDate >= endDate) {
@@ -96,7 +125,6 @@ serve(async (req) => {
       const refreshData = await refreshResponse.json();
       accessToken = refreshData.access_token;
       
-      // Update token in database
       await supabase
         .from('calendar_tokens')
         .update({ 
@@ -105,12 +133,6 @@ serve(async (req) => {
         })
         .eq('user_id', user_id);
     }
-
-    console.log('Updating event with dates:', {
-      eventId,
-      startDateTime: startDate.toISOString(),
-      endDateTime: endDate.toISOString()
-    });
 
     // Add exponential backoff for rate limiting
     const maxRetries = 3;
@@ -129,12 +151,12 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: startDate.toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                dateTime: startDateTime,
+                timeZone: userTimeZone
               },
               end: { 
-                dateTime: endDate.toISOString(),
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                dateTime: endDateTime,
+                timeZone: userTimeZone
               },
             }),
           }
@@ -151,7 +173,7 @@ serve(async (req) => {
 
           if (response.status === 403 && responseData.error?.errors?.[0]?.reason === 'rateLimitExceeded') {
             lastError = new Error('Rate limit exceeded');
-            const backoffTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            const backoffTime = Math.pow(2, retryCount) * 1000;
             console.log(`Rate limit exceeded. Retrying in ${backoffTime}ms...`);
             await new Promise(resolve => setTimeout(resolve, backoffTime));
             retryCount++;
@@ -161,12 +183,7 @@ serve(async (req) => {
           throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
         }
 
-        console.log('Successfully updated event:', {
-          id: responseData.id,
-          summary: responseData.summary,
-          start: responseData.start,
-          end: responseData.end
-        });
+        console.log('Successfully updated event:', responseData);
 
         return new Response(
           JSON.stringify({ success: true, event: responseData }),
@@ -188,7 +205,6 @@ serve(async (req) => {
       }
     }
 
-    // If we've exhausted all retries, throw the last error
     throw lastError || new Error('Failed to update calendar event after all retries');
 
   } catch (error) {
