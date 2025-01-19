@@ -42,6 +42,7 @@ export function CalendarDayColumn({ date, dayIndex, scheduledHabits }: CalendarD
               id={habit.id}
               name={habit.name}
               startTime={habit.startTime}
+              endTime={habit.endTime}
               sphere={habit.sphere}
             />
           ))}
