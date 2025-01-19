@@ -9,7 +9,7 @@ interface UseEventHandlersProps {
   sphere: string;
   isOwner: boolean;
   day: number;
-  onEventUpdate: (id: string, startTime: string, endTime: string) => void;
+  onEventUpdate: (id: string, startTime: string, endTime: string, newDay?: number) => void;
   onDayChange?: (id: string, newDay: number) => void;
 }
 
@@ -35,6 +35,7 @@ export const useEventHandlers = ({
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef<'top' | 'bottom' | null>(null);
   const currentDeltaY = useRef<number>(0);
+  const currentDeltaX = useRef<number>(0);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
     if (!isOwner) return;
@@ -65,14 +66,15 @@ export const useEventHandlers = ({
     originalEndTime.current = endTime;
     originalDay.current = day;
     currentDeltaY.current = 0;
+    currentDeltaX.current = 0;
 
     const moveHandler = (e: MouseEvent) => {
       currentDeltaY.current = e.clientY - dragStartY.current;
-      const deltaX = e.clientX - dragStartX.current;
+      currentDeltaX.current = e.clientX - dragStartX.current;
       
       // Calculate day change based on horizontal movement
       // Assuming each day column is roughly 200px wide
-      const dayChange = Math.round(deltaX / 200);
+      const dayChange = Math.round(currentDeltaX.current / 200);
       const newDay = Math.min(Math.max(0, originalDay.current + dayChange), 6);
       
       if (isResizingRef.current) {
@@ -109,8 +111,11 @@ export const useEventHandlers = ({
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
-    if (currentDeltaY.current !== 0) {
+    if (currentDeltaY.current !== 0 || currentDeltaX.current !== 0) {
       try {
+        const dayChange = Math.round(currentDeltaX.current / 200);
+        const newDay = Math.min(Math.max(0, originalDay.current + dayChange), 6);
+        
         if (isResizingRef.current) {
           const { newStartTime, newEndTime } = calculateResizeTime(
             originalStartTime.current,
@@ -118,14 +123,14 @@ export const useEventHandlers = ({
             currentDeltaY.current,
             isResizingRef.current
           );
-          onEventUpdate(id, newStartTime, newEndTime);
+          onEventUpdate(id, newStartTime, newEndTime, newDay);
         } else if (isDraggingRef.current) {
           const { newStartTime, newEndTime } = calculateNewTimes(
             originalStartTime.current,
             originalEndTime.current,
             currentDeltaY.current
           );
-          onEventUpdate(id, newStartTime, newEndTime);
+          onEventUpdate(id, newStartTime, newEndTime, newDay);
         }
       } catch (error) {
         console.error('Error updating event:', error);
@@ -142,6 +147,7 @@ export const useEventHandlers = ({
     setIsDragging(false);
     setIsResizing(null);
     currentDeltaY.current = 0;
+    currentDeltaX.current = 0;
   };
 
   return {

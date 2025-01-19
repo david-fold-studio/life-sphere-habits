@@ -22,13 +22,13 @@ export const useCalendar = (userId: string | undefined) => {
     enabled: !!userId
   });
 
-  const handleEventUpdate = async (id: string, startTime: string, endTime: string, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
+  const handleEventUpdate = async (id: string, startTime: string, endTime: string, newDay?: number, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
     try {
       // Check if this is a Google Calendar event (they have a different ID format)
       const isGoogleEvent = !id.includes('-');
       
       if (isGoogleEvent) {
-        console.log('Updating Google Calendar event:', { id, startTime, endTime });
+        console.log('Updating Google Calendar event:', { id, startTime, endTime, newDay });
         
         // Get the user's timezone
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -40,7 +40,8 @@ export const useCalendar = (userId: string | undefined) => {
             endTime,
             date: currentWeekStart.toISOString(),
             user_id: userId,
-            timeZone: userTimeZone
+            timeZone: userTimeZone,
+            newDay
           }
         });
 
@@ -64,7 +65,8 @@ export const useCalendar = (userId: string | undefined) => {
           .from('scheduled_habits')
           .update({ 
             starttime: startTime, 
-            endtime: endTime 
+            endtime: endTime,
+            day: newDay !== undefined ? newDay : undefined
           })
           .eq('id', id);
 

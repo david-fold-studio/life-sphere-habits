@@ -11,9 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, startTime, endTime, date, user_id, timeZone } = await req.json()
+    const { eventId, startTime, endTime, date, user_id, timeZone, newDay } = await req.json()
     
-    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay })
 
     // Check if this is a recurring event
     const isRecurring = eventId.includes('_R')
@@ -31,8 +31,15 @@ serve(async (req) => {
       }
     }
 
-    // Parse the event date
+    // Parse the event date and adjust for the new day if provided
     const eventDateTime = new Date(eventDate)
+    if (typeof newDay === 'number') {
+      // Calculate the difference in days
+      const currentDay = eventDateTime.getDay()
+      const dayDiff = newDay - currentDay
+      eventDateTime.setDate(eventDateTime.getDate() + dayDiff)
+    }
+
     const year = eventDateTime.getUTCFullYear()
     const month = String(eventDateTime.getUTCMonth() + 1).padStart(2, '0')
     const day = String(eventDateTime.getUTCDate()).padStart(2, '0')
@@ -53,7 +60,8 @@ serve(async (req) => {
       originalTimes: { startTime, endTime },
       originalDate: date,
       isRecurring,
-      eventId
+      eventId,
+      newDay
     })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
