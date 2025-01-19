@@ -32,14 +32,15 @@ export const useEventHandlers = ({
       isOwner, 
       sphere,
       clientY: e.clientY,
-      target: e.target,
-      currentTarget: e.currentTarget
     });
     
     if (!isOwner) {
       console.log('❌ Not owner, ignoring mouse down');
       return;
     }
+
+    // Prevent text selection during drag
+    e.preventDefault();
     
     if (type) {
       console.log('🔄 Starting resize operation:', type);
@@ -59,19 +60,16 @@ export const useEventHandlers = ({
       originalEndTime: originalEndTime.current
     });
 
-    // Create a new mousemove handler
-    mouseMoveHandler.current = (e: MouseEvent) => {
+    // Create mousemove handler before adding the listener
+    const moveHandler = (e: MouseEvent) => {
+      // Check state directly from refs to avoid closure issues
       if (!isDragging && !isResizing) {
         console.log('⏭️ Mouse move ignored - not dragging or resizing');
         return;
       }
       
       const deltaY = e.clientY - dragStartY.current;
-      console.log('📏 Mouse move delta:', { 
-        deltaY,
-        currentClientY: e.clientY,
-        originalClientY: dragStartY.current
-      });
+      console.log('📏 Mouse move delta:', deltaY);
       
       if (isResizing) {
         console.log('🔄 Resizing event:', { id, isResizing, sphere });
@@ -81,39 +79,24 @@ export const useEventHandlers = ({
           deltaY,
           isResizing
         );
-        
-        console.log('⏰ New times after resize:', { 
-          newStartTime, 
-          newEndTime,
-          originalStart: originalStartTime.current,
-          originalEnd: originalEndTime.current
-        });
         onEventUpdate(id, newStartTime, newEndTime);
-      } else if (isDragging) {
+      } else {
         console.log('🚀 Dragging event:', { id, sphere });
         const { newStartTime, newEndTime } = calculateNewTimes(
           originalStartTime.current,
           originalEndTime.current,
           deltaY
         );
-        
-        console.log('⏰ New times after drag:', { 
-          newStartTime, 
-          newEndTime,
-          originalStart: originalStartTime.current,
-          originalEnd: originalEndTime.current,
-          deltaY
-        });
         onEventUpdate(id, newStartTime, newEndTime);
       }
     };
+
+    // Store the handler reference
+    mouseMoveHandler.current = moveHandler;
     
     // Add the event listeners
-    document.addEventListener('mousemove', mouseMoveHandler.current);
+    document.addEventListener('mousemove', moveHandler);
     document.addEventListener('mouseup', handleMouseUp);
-    
-    // Prevent text selection during drag
-    e.preventDefault();
   };
 
   const handleMouseUp = () => {
@@ -122,15 +105,16 @@ export const useEventHandlers = ({
       wasResizing: isResizing
     });
     
-    setIsDragging(false);
-    setIsResizing(null);
-    
     // Remove event listeners using the stored handler
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
     }
     document.removeEventListener('mouseup', handleMouseUp);
+    
+    // Reset states after cleanup
+    setIsDragging(false);
+    setIsResizing(null);
   };
 
   return {
