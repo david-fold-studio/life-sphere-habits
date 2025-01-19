@@ -1,11 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addHours, startOfDay, startOfWeek, addDays } from "date-fns";
+import { startOfWeek, addDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { CalendarEvent } from "@/components/CalendarEvent";
+import { CalendarHeader } from "@/components/CalendarHeader";
+import { CalendarTimeSlots } from "@/components/CalendarTimeSlots";
+import { CalendarDayColumn } from "@/components/CalendarDayColumn";
 
 const CalendarView = () => {
   const { user } = useAuth();
@@ -131,19 +132,10 @@ const CalendarView = () => {
   const today = new Date();
   const weekStart = startOfWeek(today);
   
-  const timeSlots = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    label: format(addHours(startOfDay(today), i), "h:mm a"),
+  const weekDays = Array.from({ length: 7 }, (_, i) => ({
+    date: addDays(weekStart, i),
+    dayIndex: i,
   }));
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(weekStart, i);
-    return {
-      date,
-      dayName: format(date, "EEE"),
-      fullDate: format(date, "MMM d"),
-    };
-  });
 
   if (isLoading) {
     return (
@@ -155,61 +147,22 @@ const CalendarView = () => {
 
   return (
     <div className="container mx-auto p-4 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="mb-2 text-3xl font-bold">Weekly Schedule</h1>
-          <p className="text-muted-foreground">
-            Week of {format(weekStart, "MMMM d, yyyy")}
-          </p>
-        </div>
-        
-        <Button 
-          onClick={handleConnectCalendar}
-          className="relative"
-        >
-          Connect Google Calendar
-        </Button>
-      </header>
+      <CalendarHeader 
+        weekStart={weekStart}
+        onConnectCalendar={handleConnectCalendar}
+      />
 
       <div className="flex">
-        <div className="w-20 flex-shrink-0">
-          <div className="h-16" />
-          {timeSlots.map(({ hour, label }) => (
-            <div key={hour} className="h-20 border-t text-sm text-muted-foreground pr-2 text-right">
-              {label}
-            </div>
-          ))}
-        </div>
+        <CalendarTimeSlots />
 
         <div className="flex-grow flex">
-          {weekDays.map(({ date, dayName, fullDate }, dayIndex) => (
-            <div key={dayIndex} className="flex-1 relative border-l first:border-l-0">
-              <div className="h-16 border-b p-2 text-center sticky top-0 bg-background">
-                <div className="font-semibold">{dayName}</div>
-                <div className="text-sm text-muted-foreground">{fullDate}</div>
-              </div>
-
-              <div className="relative">
-                {timeSlots.map(({ hour }) => (
-                  <div
-                    key={hour}
-                    className="h-20 border-t border-gray-200"
-                  />
-                ))}
-
-                {scheduledHabits
-                  .filter((habit) => habit.day === dayIndex)
-                  .map((habit) => (
-                    <CalendarEvent
-                      key={habit.id}
-                      id={habit.id}
-                      name={habit.name}
-                      startTime={habit.startTime}
-                      sphere={habit.sphere}
-                    />
-                  ))}
-              </div>
-            </div>
+          {weekDays.map(({ date, dayIndex }) => (
+            <CalendarDayColumn
+              key={dayIndex}
+              date={date}
+              dayIndex={dayIndex}
+              scheduledHabits={scheduledHabits}
+            />
           ))}
         </div>
       </div>
