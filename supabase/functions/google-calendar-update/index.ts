@@ -37,25 +37,16 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Get hours and minutes from the time strings
-    const [startHours, startMinutes] = startTime.split(':').map(Number);
-    const [endHours, endMinutes] = endTime.split(':').map(Number);
-
     // Format the date-time strings in RFC3339 format
-    const formatDateTime = (hours: number, minutes: number) => {
-      const datePart = date.split('T')[0];
-      return `${datePart}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-    };
+    const datePart = date.split('T')[0];
+    const startDateTime = `${datePart}T${startTime}:00`;
+    const endDateTime = `${datePart}T${endTime}:00`;
 
-    const formattedStart = formatDateTime(startHours, startMinutes);
-    const formattedEnd = formatDateTime(endHours, endMinutes);
-
-    console.log('Formatted dates:', {
-      startDateTime: formattedStart,
-      endDateTime: formattedEnd,
+    console.log('Using formatted dates:', {
+      startDateTime,
+      endDateTime,
       timeZone,
-      originalTimes: { startTime, endTime },
-      originalDate: date
+      eventId
     });
 
     // Check if token is expired and refresh if needed
@@ -108,11 +99,7 @@ serve(async (req) => {
         const isRecurringInstance = eventId.includes('_R');
         const baseEventId = isRecurringInstance ? eventId.split('_')[0] : eventId;
         
-        // For recurring instances, we need to use a different endpoint
-        const endpoint = isRecurringInstance
-          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${baseEventId}/instances/${eventId}`
-          : `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
-
+        const endpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
         console.log('Making request to endpoint:', endpoint);
         
         const response = await fetch(
@@ -125,27 +112,26 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: formattedStart,
+                dateTime: startDateTime,
                 timeZone
               },
               end: { 
-                dateTime: formattedEnd,
+                dateTime: endDateTime,
                 timeZone
               },
             }),
           }
         );
 
-        const responseData = await response.json();
-
         if (!response.ok) {
+          const errorText = await response.text();
           console.error('Google Calendar API error:', {
             status: response.status,
             statusText: response.statusText,
-            error: responseData
+            error: errorText
           });
 
-          if (response.status === 403 && responseData.error?.errors?.[0]?.reason === 'rateLimitExceeded') {
+          if (response.status === 403 && errorText.includes('rateLimitExceeded')) {
             lastError = new Error('Rate limit exceeded');
             const backoffTime = Math.pow(2, retryCount) * 1000;
             console.log(`Rate limit exceeded. Retrying in ${backoffTime}ms...`);
@@ -154,9 +140,10 @@ serve(async (req) => {
             continue;
           }
 
-          throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText} - ${errorText}`);
         }
 
+        const responseData = await response.json();
         console.log('Successfully updated event:', responseData);
 
         return new Response(
