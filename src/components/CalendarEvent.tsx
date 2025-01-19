@@ -12,6 +12,7 @@ interface CalendarEventProps {
   startTime: string;
   endTime: string;
   sphere: string;
+  day: number;
   isRecurring?: boolean;
   hasInvitees?: boolean;
   isOwner?: boolean;
@@ -25,6 +26,7 @@ export const CalendarEvent = memo(function CalendarEvent({
   startTime, 
   endTime, 
   sphere,
+  day,
   isRecurring = false,
   hasInvitees = false,
   isOwner = true,
@@ -35,6 +37,7 @@ export const CalendarEvent = memo(function CalendarEvent({
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [visualStartTime, setVisualStartTime] = useState(startTime);
   const [visualEndTime, setVisualEndTime] = useState(endTime);
+  const [visualDay, setVisualDay] = useState(day);
 
   const {
     isDragging,
@@ -45,6 +48,7 @@ export const CalendarEvent = memo(function CalendarEvent({
     startTime,
     endTime,
     sphere,
+    day,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
       if (sphere === 'google-calendar') {
@@ -58,10 +62,16 @@ export const CalendarEvent = memo(function CalendarEvent({
   });
 
   useEffect(() => {
-    const handleVisualUpdate = (e: CustomEvent<{ id: string; newStartTime: string; newEndTime: string }>) => {
+    const handleVisualUpdate = (e: CustomEvent<{ 
+      id: string; 
+      newStartTime: string; 
+      newEndTime: string;
+      newDay: number;
+    }>) => {
       if (e.detail.id === id) {
         setVisualStartTime(e.detail.newStartTime);
         setVisualEndTime(e.detail.newEndTime);
+        setVisualDay(e.detail.newDay);
       }
     };
 
@@ -71,11 +81,11 @@ export const CalendarEvent = memo(function CalendarEvent({
     };
   }, [id]);
 
-  // Reset visual times when actual times change
   useEffect(() => {
     setVisualStartTime(startTime);
     setVisualEndTime(endTime);
-  }, [startTime, endTime]);
+    setVisualDay(day);
+  }, [startTime, endTime, day]);
 
   const [startHours, startMinutes] = visualStartTime.split(":").map(Number);
   const [endHours, endMinutes] = visualEndTime.split(":").map(Number);
@@ -109,7 +119,8 @@ export const CalendarEvent = memo(function CalendarEvent({
         className={`absolute left-0 right-0 mx-0.5 px-[0.5px] overflow-hidden z-20 ${backgroundColor} ${isDragging ? 'opacity-70' : ''}`}
         style={{
           ...calculateEventStyle(visualStartTime, visualEndTime, isDragging),
-          cursor
+          cursor,
+          transform: `translateX(${(visualDay - day) * 100}%)`
         }}
         onMouseDown={handleCardMouseDown}
         onClick={handleCardClick}

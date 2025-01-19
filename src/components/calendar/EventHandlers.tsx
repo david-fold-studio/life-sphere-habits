@@ -8,7 +8,9 @@ interface UseEventHandlersProps {
   endTime: string;
   sphere: string;
   isOwner: boolean;
+  day: number;
   onEventUpdate: (id: string, startTime: string, endTime: string) => void;
+  onDayChange?: (id: string, newDay: number) => void;
 }
 
 export const useEventHandlers = ({
@@ -17,14 +19,18 @@ export const useEventHandlers = ({
   endTime,
   sphere,
   isOwner,
+  day,
   onEventUpdate,
+  onDayChange,
 }: UseEventHandlersProps) => {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<'top' | 'bottom' | null>(null);
   const dragStartY = useRef<number>(0);
+  const dragStartX = useRef<number>(0);
   const originalStartTime = useRef<string>(startTime);
   const originalEndTime = useRef<string>(endTime);
+  const originalDay = useRef<number>(day);
   const mouseMoveHandler = useRef<((e: MouseEvent) => void) | null>(null);
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef<'top' | 'bottom' | null>(null);
@@ -35,7 +41,6 @@ export const useEventHandlers = ({
 
     e.preventDefault();
     
-    // Clean up any existing handlers
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
@@ -55,14 +60,21 @@ export const useEventHandlers = ({
     }
     
     dragStartY.current = e.clientY;
+    dragStartX.current = e.clientX;
     originalStartTime.current = startTime;
     originalEndTime.current = endTime;
+    originalDay.current = day;
     currentDeltaY.current = 0;
 
     const moveHandler = (e: MouseEvent) => {
       currentDeltaY.current = e.clientY - dragStartY.current;
+      const deltaX = e.clientX - dragStartX.current;
       
-      // Visual update without sending to server
+      // Calculate day change based on horizontal movement
+      // Assuming each day column is roughly 200px wide
+      const dayChange = Math.round(deltaX / 200);
+      const newDay = Math.min(Math.max(0, originalDay.current + dayChange), 6);
+      
       if (isResizingRef.current) {
         const { newStartTime, newEndTime } = calculateResizeTime(
           originalStartTime.current,
@@ -70,9 +82,8 @@ export const useEventHandlers = ({
           currentDeltaY.current,
           isResizingRef.current
         );
-        // Update visual position only
         document.dispatchEvent(new CustomEvent('visualTimeUpdate', {
-          detail: { id, newStartTime, newEndTime }
+          detail: { id, newStartTime, newEndTime, newDay }
         }));
       } else if (isDraggingRef.current) {
         const { newStartTime, newEndTime } = calculateNewTimes(
@@ -80,9 +91,8 @@ export const useEventHandlers = ({
           originalEndTime.current,
           currentDeltaY.current
         );
-        // Update visual position only
         document.dispatchEvent(new CustomEvent('visualTimeUpdate', {
-          detail: { id, newStartTime, newEndTime }
+          detail: { id, newStartTime, newEndTime, newDay }
         }));
       }
     };
@@ -99,7 +109,6 @@ export const useEventHandlers = ({
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
-    // Only update the server when the mouse is released
     if (currentDeltaY.current !== 0) {
       try {
         if (isResizingRef.current) {
