@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarWeekHeader } from "@/components/CalendarWeekHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
+import { useState } from "react";
 
 interface ScheduledHabit {
   id: string;
@@ -37,7 +38,6 @@ const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> =
 
   if (error) throw new Error(error.message);
   
-  // Map the database rows to our ScheduledHabit interface
   return (data || []).map((habit: ScheduledHabitRow) => ({
     id: habit.id,
     name: habit.name,
@@ -51,10 +51,10 @@ const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> =
 export default function CalendarView() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const weekStart = startOfWeek(new Date());
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(weekStart, i);
+    const date = addDays(currentWeekStart, i);
     return { date, dayIndex: i };
   });
 
@@ -69,6 +69,10 @@ export default function CalendarView() {
       title: "Coming soon",
       description: "Google Calendar integration will be available soon.",
     });
+  };
+
+  const handleWeekChange = (newDate: Date) => {
+    setCurrentWeekStart(newDate);
   };
 
   if (isLoading) {
@@ -91,8 +95,9 @@ export default function CalendarView() {
     <div className="flex h-screen flex-col">
       <div className="flex-none p-8 pb-0">
         <CalendarHeader
-          weekStart={weekStart}
+          weekStart={currentWeekStart}
           onConnectCalendar={handleGoogleCalendarConnect}
+          onWeekChange={handleWeekChange}
         />
       </div>
       <div className="flex-none">
