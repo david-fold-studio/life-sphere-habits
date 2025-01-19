@@ -39,13 +39,16 @@ export const useEventHandlers = ({
       return;
     }
 
+    // Stop event propagation to prevent double handling
+    e.stopPropagation();
+    
     // Prevent text selection during drag
     e.preventDefault();
     
     if (type) {
       console.log('🔄 Starting resize operation:', type);
       setIsResizing(type);
-    } else {
+    } else if (!isResizing) { // Only start drag if not already resizing
       console.log('✋ Starting drag operation');
       setIsDragging(true);
     }
@@ -62,32 +65,25 @@ export const useEventHandlers = ({
 
     // Create mousemove handler before adding the listener
     const moveHandler = (e: MouseEvent) => {
-      // Check state directly from refs to avoid closure issues
-      if (!isDragging && !isResizing) {
-        console.log('⏭️ Mouse move ignored - not dragging or resizing');
-        return;
-      }
-      
-      const deltaY = e.clientY - dragStartY.current;
-      console.log('📏 Mouse move delta:', deltaY);
-      
       if (isResizing) {
         console.log('🔄 Resizing event:', { id, isResizing, sphere });
         const { newStartTime, newEndTime } = calculateResizeTime(
           originalStartTime.current,
           originalEndTime.current,
-          deltaY,
+          e.clientY - dragStartY.current,
           isResizing
         );
         onEventUpdate(id, newStartTime, newEndTime);
-      } else {
+      } else if (isDragging) {
         console.log('🚀 Dragging event:', { id, sphere });
         const { newStartTime, newEndTime } = calculateNewTimes(
           originalStartTime.current,
           originalEndTime.current,
-          deltaY
+          e.clientY - dragStartY.current
         );
         onEventUpdate(id, newStartTime, newEndTime);
+      } else {
+        console.log('⏭️ Mouse move ignored - not dragging or resizing');
       }
     };
 
