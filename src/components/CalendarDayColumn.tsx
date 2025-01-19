@@ -20,14 +20,18 @@ export function CalendarDayColumn({ dayIndex, scheduledHabits }: CalendarDayColu
   
   return (
     <div className="flex-1 relative border-l first:border-l-0">
-      <div className="relative">
+      {/* Time grid in the background */}
+      <div className="absolute inset-0">
         {timeSlots.map((hour) => (
           <div
             key={hour}
             className="h-[48px] border-t border-gray-200"
           />
         ))}
+      </div>
 
+      {/* Habits layer on top */}
+      <div className="absolute inset-0">
         {scheduledHabits
           .filter((habit) => habit.day === dayIndex)
           .map((habit) => (

@@ -40,11 +40,11 @@ export function CalendarGrid({ weekDays, scheduledHabits }: CalendarGridProps) {
   return (
     <div 
       ref={scrollContainerRef}
-      className="flex overflow-y-auto"
+      className="flex overflow-y-auto relative"
       style={{ height: 'calc(100vh - 12rem)' }}
     >
       <CalendarTimeSlots />
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         {weekDays.map(({ date, dayIndex }) => (
           <CalendarDayColumn
             key={dayIndex}
