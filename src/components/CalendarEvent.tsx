@@ -32,6 +32,12 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
     };
   };
 
+  // Calculate if event is long enough to show wrapped text (more than 30 minutes)
+  const [startHours, startMinutes] = startTime.split(":").map(Number);
+  const [endHours, endMinutes] = endTime.split(":").map(Number);
+  const durationInMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+  const shouldWrapText = durationInMinutes >= 30;
+
   return (
     <Card
       key={id}
@@ -41,7 +47,9 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
         backgroundColor: `var(--sphere-${sphere})`,
       }}
     >
-      <div className="font-medium text-xs truncate">{name}</div>
+      <div className={`font-medium text-xs ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
+        {name}
+      </div>
     </Card>
   );
 }
