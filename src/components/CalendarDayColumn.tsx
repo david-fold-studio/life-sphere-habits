@@ -30,7 +30,7 @@ export function CalendarDayColumn({ date, dayIndex, scheduledHabits }: CalendarD
         {timeSlots.map((hour) => (
           <div
             key={hour}
-            className="h-[32px] border-t border-gray-200"
+            className="h-[48px] border-t border-gray-200"
           />
         ))}
 
