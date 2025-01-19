@@ -50,8 +50,8 @@ const CalendarView = () => {
 
     try {
       console.log('Starting Google Calendar authorization for user:', user.id);
+      // Update the function name to match exactly what's in Supabase
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
-        method: 'POST',
         body: { user_id: user.id },
       });
       
