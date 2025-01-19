@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format, addHours, startOfDay, startOfWeek, addDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { CalendarEvent } from "@/components/CalendarEvent";
 
 const CalendarView = () => {
   const { user } = useAuth();
@@ -145,14 +145,6 @@ const CalendarView = () => {
     };
   });
 
-  const getEventStyle = (startTime: string) => {
-    const [hours, minutes] = startTime.split(":").map(Number);
-    const top = (hours * 60 + minutes) * (100 / 1440);
-    return {
-      top: `${top}%`,
-    };
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -208,16 +200,13 @@ const CalendarView = () => {
                 {scheduledHabits
                   .filter((habit) => habit.day === dayIndex)
                   .map((habit) => (
-                    <Card
+                    <CalendarEvent
                       key={habit.id}
-                      className={`absolute left-0 right-0 mx-1 p-2`}
-                      style={{
-                        ...getEventStyle(habit.startTime),
-                        backgroundColor: `var(--sphere-${habit.sphere})`,
-                      }}
-                    >
-                      <div className="font-medium text-sm">{habit.name}</div>
-                    </Card>
+                      id={habit.id}
+                      name={habit.name}
+                      startTime={habit.startTime}
+                      sphere={habit.sphere}
+                    />
                   ))}
               </div>
             </div>
