@@ -28,7 +28,7 @@ serve(async (req) => {
 
     const { data: tokenData, error: tokenError } = await supabase
       .from('calendar_tokens')
-      .select('access_token, refresh_token')
+      .select('access_token, refresh_token, expires_at')
       .eq('user_id', user_id)
       .maybeSingle();
 
@@ -53,118 +53,144 @@ serve(async (req) => {
     startDate.setHours(startHours, startMinutes, 0);
     endDate.setHours(endHours, endMinutes, 0);
 
+    // Validate times
+    if (startDate >= endDate) {
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid time range: start time must be before end time'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
+    }
+
+    // Check if token is expired and refresh if needed
+    const now = new Date();
+    const tokenExpiry = tokenData.expires_at ? new Date(tokenData.expires_at) : null;
+    let accessToken = tokenData.access_token;
+
+    if (tokenExpiry && tokenExpiry <= now && tokenData.refresh_token) {
+      console.log('Token expired, refreshing...');
+      const refreshResponse = await fetch(
+        'https://oauth2.googleapis.com/token',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            client_id: Deno.env.get('GOOGLE_OAUTH_CLIENT_ID')!,
+            client_secret: Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET')!,
+            refresh_token: tokenData.refresh_token,
+            grant_type: 'refresh_token',
+          }),
+        }
+      );
+
+      if (!refreshResponse.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const refreshData = await refreshResponse.json();
+      accessToken = refreshData.access_token;
+      
+      // Update token in database
+      await supabase
+        .from('calendar_tokens')
+        .update({ 
+          access_token: refreshData.access_token,
+          expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString()
+        })
+        .eq('user_id', user_id);
+    }
+
     console.log('Updating event with dates:', {
       eventId,
       startDateTime: startDate.toISOString(),
       endDateTime: endDate.toISOString()
     });
 
-    // Update the event in Google Calendar
-    const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          start: { dateTime: startDate.toISOString() },
-          end: { dateTime: endDate.toISOString() },
-        }),
-      }
-    );
+    // Add exponential backoff for rate limiting
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastError = null;
 
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error('Google Calendar API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: responseData
-      });
-
-      // If token is expired, try to refresh it
-      if (response.status === 401 && tokenData.refresh_token) {
-        console.log('Token expired, attempting refresh...');
-        const refreshResponse = await fetch(
-          'https://oauth2.googleapis.com/token',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              client_id: Deno.env.get('GOOGLE_OAUTH_CLIENT_ID')!,
-              client_secret: Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET')!,
-              refresh_token: tokenData.refresh_token,
-              grant_type: 'refresh_token',
-            }),
-          }
-        );
-
-        if (!refreshResponse.ok) {
-          throw new Error('Failed to refresh token');
-        }
-
-        const refreshData = await refreshResponse.json();
-        
-        // Update token in database
-        await supabase
-          .from('calendar_tokens')
-          .update({ 
-            access_token: refreshData.access_token,
-            expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString()
-          })
-          .eq('user_id', user_id);
-
-        // Retry the original request with new token
-        const retryResponse = await fetch(
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch(
           `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
           {
             method: 'PATCH',
             headers: {
-              'Authorization': `Bearer ${refreshData.access_token}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              start: { dateTime: startDate.toISOString() },
-              end: { dateTime: endDate.toISOString() },
+              start: { 
+                dateTime: startDate.toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              },
+              end: { 
+                dateTime: endDate.toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+              },
             }),
           }
         );
 
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to update calendar event after token refresh: ${retryResponse.status} ${retryResponse.statusText}`);
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          console.error('Google Calendar API error:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: responseData
+          });
+
+          if (response.status === 403 && responseData.error?.errors?.[0]?.reason === 'rateLimitExceeded') {
+            lastError = new Error('Rate limit exceeded');
+            const backoffTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
+            console.log(`Rate limit exceeded. Retrying in ${backoffTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, backoffTime));
+            retryCount++;
+            continue;
+          }
+
+          throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
         }
 
-        const retryData = await retryResponse.json();
+        console.log('Successfully updated event:', {
+          id: responseData.id,
+          summary: responseData.summary,
+          start: responseData.start,
+          end: responseData.end
+        });
+
         return new Response(
-          JSON.stringify({ success: true, event: retryData }),
+          JSON.stringify({ success: true, event: responseData }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           }
         );
+      } catch (error) {
+        lastError = error;
+        if (retryCount < maxRetries - 1) {
+          const backoffTime = Math.pow(2, retryCount) * 1000;
+          console.log(`Error occurred. Retrying in ${backoffTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffTime));
+          retryCount++;
+        } else {
+          break;
+        }
       }
-
-      throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
     }
 
-    console.log('Successfully updated event:', {
-      id: responseData.id,
-      summary: responseData.summary,
-      start: responseData.start,
-      end: responseData.end
-    });
+    // If we've exhausted all retries, throw the last error
+    throw lastError || new Error('Failed to update calendar event after all retries');
 
-    return new Response(
-      JSON.stringify({ success: true, event: responseData }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
   } catch (error) {
     console.error('Error in google-calendar-update:', error);
     return new Response(
