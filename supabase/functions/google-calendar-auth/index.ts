@@ -48,17 +48,25 @@ serve(async (req) => {
     googleAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID)
     googleAuthUrl.searchParams.append('redirect_uri', redirectUri)
     googleAuthUrl.searchParams.append('response_type', 'code')
-    googleAuthUrl.searchParams.append('scope', [
+    
+    // Explicitly include all required scopes
+    const scopes = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events'
-    ].join(' '))
+    ];
+    
+    googleAuthUrl.searchParams.append('scope', scopes.join(' '))
     googleAuthUrl.searchParams.append('access_type', 'offline')
     googleAuthUrl.searchParams.append('state', user_id)
     googleAuthUrl.searchParams.append('prompt', 'consent')
+    
+    // Add additional parameters for debugging
+    googleAuthUrl.searchParams.append('include_granted_scopes', 'true')
 
     console.log('Generated auth URL:', googleAuthUrl.toString())
+    console.log('Requested scopes:', scopes)
 
     return new Response(
       JSON.stringify({ url: googleAuthUrl.toString() }),
