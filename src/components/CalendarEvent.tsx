@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EventDialog } from "./calendar/EventDialog";
+import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
 import { calculateEventStyle, calculateNewTimes, calculateResizeTime } from "./calendar/EventDragLogic";
 import { GripHorizontal } from "lucide-react";
 

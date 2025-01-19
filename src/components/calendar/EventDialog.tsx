@@ -15,6 +15,7 @@ interface EventDialogProps {
   startTime: string;
   endTime: string;
   sphere: string;
+  isOwner: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: (id: string) => void;
@@ -26,6 +27,7 @@ export function EventDialog({
   startTime, 
   endTime, 
   sphere,
+  isOwner,
   open,
   onOpenChange,
   onDelete 
@@ -77,7 +79,7 @@ export function EventDialog({
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-muted-foreground">Time: {startTime} - {endTime}</p>
-          {sphere !== 'google-calendar' && (
+          {isOwner && sphere !== 'google-calendar' && (
             <p className="text-sm text-muted-foreground mt-2">
               Tip: You can drag the event to change its time.
             </p>
@@ -87,7 +89,7 @@ export function EventDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          {sphere !== 'google-calendar' && (
+          {isOwner && sphere !== 'google-calendar' && (
             <Button variant="destructive" onClick={handleDelete}>
               Delete
             </Button>

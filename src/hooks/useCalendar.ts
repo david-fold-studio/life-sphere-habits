@@ -22,7 +22,7 @@ export const useCalendar = (userId: string | undefined) => {
     enabled: !!userId
   });
 
-  const handleEventUpdate = async (id: string, startTime: string, endTime: string) => {
+  const handleEventUpdate = async (id: string, startTime: string, endTime: string, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
     try {
       const { error } = await supabase
         .from('scheduled_habits')
