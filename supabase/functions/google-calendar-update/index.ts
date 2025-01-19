@@ -11,9 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, startTime, endTime, date, timeZone } = await req.json()
+    const { eventId, startTime, endTime, date, user_id, timeZone } = await req.json()
     
-    console.log('Received request:', { eventId, startTime, endTime, date, timeZone })
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
     // Extract the date part from the provided date
     const datePart = date.split('T')[0]
@@ -33,9 +33,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
-    // Get the user's calendar token
+    // Get the user's calendar token using the user_id parameter
     const { data: tokenData, error: tokenError } = await fetch(
-      `${supabaseUrl}/rest/v1/calendar_tokens?user_id=eq.${req.headers.get('x-user-id')}`,
+      `${supabaseUrl}/rest/v1/calendar_tokens?user_id=eq.${user_id}`,
       {
         headers: {
           Authorization: `Bearer ${supabaseServiceKey}`,
@@ -43,6 +43,8 @@ serve(async (req) => {
         },
       }
     ).then(res => res.json())
+
+    console.log('Token data:', tokenData)
 
     if (tokenError || !tokenData?.[0]?.access_token) {
       throw new Error('No valid token found')
