@@ -39,6 +39,17 @@ serve(async (req) => {
       )
     }
 
+    // Verify the state parameter contains the Supabase user ID
+    if (!state) {
+      return new Response(
+        JSON.stringify({ error: 'No state parameter present' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+
     const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID')
     const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET')
     const redirectUri = 'https://yrrnprfymzagkxcwycrk.supabase.co/functions/v1/google-calendar-callback'
@@ -88,11 +99,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Store the tokens in the database
+    // Store the tokens in the database using the state parameter as user_id
     const { error: dbError } = await supabaseClient
       .from('calendar_tokens')
       .upsert({
-        user_id: userInfo.id, // Use the Google user ID
+        user_id: state, // Use the Supabase user ID from state parameter
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_type: tokens.token_type,
