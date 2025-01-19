@@ -23,6 +23,7 @@ export const useEventHandlers = ({
   const dragStartY = useRef<number>(0);
   const originalStartTime = useRef<string>(startTime);
   const originalEndTime = useRef<string>(endTime);
+  const mouseMoveHandler = useRef<((e: MouseEvent) => void) | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
     console.log('🔵 Mouse down event triggered:', { 
@@ -57,60 +58,62 @@ export const useEventHandlers = ({
       originalStartTime: originalStartTime.current,
       originalEndTime: originalEndTime.current
     });
+
+    // Create a new mousemove handler
+    mouseMoveHandler.current = (e: MouseEvent) => {
+      if (!isDragging && !isResizing) {
+        console.log('⏭️ Mouse move ignored - not dragging or resizing');
+        return;
+      }
+      
+      const deltaY = e.clientY - dragStartY.current;
+      console.log('📏 Mouse move delta:', { 
+        deltaY,
+        currentClientY: e.clientY,
+        originalClientY: dragStartY.current
+      });
+      
+      if (isResizing) {
+        console.log('🔄 Resizing event:', { id, isResizing, sphere });
+        const { newStartTime, newEndTime } = calculateResizeTime(
+          originalStartTime.current,
+          originalEndTime.current,
+          deltaY,
+          isResizing
+        );
+        
+        console.log('⏰ New times after resize:', { 
+          newStartTime, 
+          newEndTime,
+          originalStart: originalStartTime.current,
+          originalEnd: originalEndTime.current
+        });
+        onEventUpdate(id, newStartTime, newEndTime);
+      } else if (isDragging) {
+        console.log('🚀 Dragging event:', { id, sphere });
+        const { newStartTime, newEndTime } = calculateNewTimes(
+          originalStartTime.current,
+          originalEndTime.current,
+          deltaY
+        );
+        
+        console.log('⏰ New times after drag:', { 
+          newStartTime, 
+          newEndTime,
+          originalStart: originalStartTime.current,
+          originalEnd: originalEndTime.current,
+          deltaY
+        });
+        onEventUpdate(id, newStartTime, newEndTime);
+      }
+    };
     
-    document.addEventListener('mousemove', handleMouseMove);
+    // Add the event listeners
+    document.addEventListener('mousemove', mouseMoveHandler.current);
     document.addEventListener('mouseup', handleMouseUp);
     
     // Prevent text selection during drag
     e.preventDefault();
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging && !isResizing) {
-      console.log('⏭️ Mouse move ignored - not dragging or resizing');
-      return;
-    }
-    
-    const deltaY = e.clientY - dragStartY.current;
-    console.log('📏 Mouse move delta:', { 
-      deltaY,
-      currentClientY: e.clientY,
-      originalClientY: dragStartY.current
-    });
-    
-    if (isResizing) {
-      console.log('🔄 Resizing event:', { id, isResizing, sphere });
-      const { newStartTime, newEndTime } = calculateResizeTime(
-        originalStartTime.current,
-        originalEndTime.current,
-        deltaY,
-        isResizing
-      );
-      
-      console.log('⏰ New times after resize:', { 
-        newStartTime, 
-        newEndTime,
-        originalStart: originalStartTime.current,
-        originalEnd: originalEndTime.current
-      });
-      onEventUpdate(id, newStartTime, newEndTime);
-    } else if (isDragging) {
-      console.log('🚀 Dragging event:', { id, sphere });
-      const { newStartTime, newEndTime } = calculateNewTimes(
-        originalStartTime.current,
-        originalEndTime.current,
-        deltaY
-      );
-      
-      console.log('⏰ New times after drag:', { 
-        newStartTime, 
-        newEndTime,
-        originalStart: originalStartTime.current,
-        originalEnd: originalEndTime.current,
-        deltaY
-      });
-      onEventUpdate(id, newStartTime, newEndTime);
-    }
   };
 
   const handleMouseUp = () => {
@@ -118,9 +121,15 @@ export const useEventHandlers = ({
       wasDragging: isDragging,
       wasResizing: isResizing
     });
+    
     setIsDragging(false);
     setIsResizing(null);
-    document.removeEventListener('mousemove', handleMouseMove);
+    
+    // Remove event listeners using the stored handler
+    if (mouseMoveHandler.current) {
+      document.removeEventListener('mousemove', mouseMoveHandler.current);
+      mouseMoveHandler.current = null;
+    }
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
