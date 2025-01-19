@@ -37,7 +37,7 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Format the date-time strings in RFC3339 format
+    // Format the date-time strings by combining the date part with the time
     const datePart = date.split('T')[0];
     const startDateTime = `${datePart}T${startTime}:00`;
     const endDateTime = `${datePart}T${endTime}:00`;
@@ -95,10 +95,6 @@ serve(async (req) => {
 
     while (retryCount < maxRetries) {
       try {
-        // Check if this is a recurring event instance
-        const isRecurringInstance = eventId.includes('_R');
-        const baseEventId = isRecurringInstance ? eventId.split('_')[0] : eventId;
-        
         const endpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
         console.log('Making request to endpoint:', endpoint);
         
