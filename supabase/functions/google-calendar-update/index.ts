@@ -35,9 +35,9 @@ serve(async (req) => {
     
     console.log('Fetching token for user:', user_id)
     
-    // Get the user's calendar token using the user_id parameter
-    const response = await fetch(
-      `${supabaseUrl}/rest/v1/calendar_tokens?select=access_token&user_id=eq.${user_id}`,
+    // First get the profile ID which is linked to the calendar tokens
+    const profileResponse = await fetch(
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${user_id}&select=id`,
       {
         headers: {
           Authorization: `Bearer ${supabaseServiceKey}`,
@@ -46,16 +46,41 @@ serve(async (req) => {
       }
     );
 
-    if (!response.ok) {
-      console.error('Failed to fetch token:', await response.text());
+    if (!profileResponse.ok) {
+      console.error('Failed to fetch profile:', await profileResponse.text());
+      throw new Error('Failed to fetch profile');
+    }
+
+    const profileData = await profileResponse.json();
+    console.log('Profile data:', profileData);
+
+    if (!profileData || profileData.length === 0) {
+      throw new Error('Profile not found');
+    }
+
+    const profileId = profileData[0].id;
+    
+    // Now get the calendar token using the profile ID
+    const tokenResponse = await fetch(
+      `${supabaseUrl}/rest/v1/calendar_tokens?select=access_token&user_id=eq.${profileId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${supabaseServiceKey}`,
+          apikey: supabaseServiceKey,
+        },
+      }
+    );
+
+    if (!tokenResponse.ok) {
+      console.error('Failed to fetch token:', await tokenResponse.text());
       throw new Error('Failed to fetch token');
     }
 
-    const tokenData = await response.json();
+    const tokenData = await tokenResponse.json();
     console.log('Token data response:', tokenData);
 
     if (!tokenData || !tokenData[0] || !tokenData[0].access_token) {
-      console.error('No token found for user:', user_id);
+      console.error('No token found for profile:', profileId);
       throw new Error('No valid token found');
     }
 
