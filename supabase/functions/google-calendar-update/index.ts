@@ -8,7 +8,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -36,53 +36,32 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Parse the date and times
+    // Parse the base date
     const baseDate = new Date(date);
     if (isNaN(baseDate.getTime())) {
       throw new Error('Invalid date format provided');
     }
 
-    // Convert time strings to hours and minutes
+    // Get hours and minutes from the time strings
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
-    
-    // Create new Date objects for start and end times using the original date
-    const startDate = new Date(baseDate);
-    startDate.setHours(startHours, startMinutes, 0);
-    
-    const endDate = new Date(baseDate);
-    endDate.setHours(endHours, endMinutes, 0);
 
-    // Get the user's timezone
+    // Create the full ISO date-time strings
+    const year = baseDate.getFullYear();
+    const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+    const day = String(baseDate.getDate()).padStart(2, '0');
+    
+    const startDateTime = `${year}-${month}-${day}T${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}:00`;
+    const endDateTime = `${year}-${month}-${day}T${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
+
+    // Get user's timezone
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log('User timezone:', userTimeZone);
-
-    // Format dates in ISO format with the user's timezone
-    const startDateTime = startDate.toLocaleString('en-US', {
-      timeZone: userTimeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6');
-
-    const endDateTime = endDate.toLocaleString('en-US', {
-      timeZone: userTimeZone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6');
-
+    console.log('Using timezone:', userTimeZone);
     console.log('Formatted dates:', { startDateTime, endDateTime });
 
     // Validate times
+    const startDate = new Date(startDateTime);
+    const endDate = new Date(endDateTime);
     if (startDate >= endDate) {
       return new Response(
         JSON.stringify({
