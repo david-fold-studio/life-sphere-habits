@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, addDays } from "date-fns";
+import { startOfWeek, addDays, format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { CalendarHeader } from "@/components/CalendarHeader";
@@ -30,6 +30,14 @@ interface ScheduledHabitRow {
   user_id: string;
 }
 
+interface GoogleCalendarEvent {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  day: number;
+}
+
 const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> => {
   console.log('Fetching habits for user:', userId);
   const { data, error } = await supabase
@@ -54,6 +62,52 @@ const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> =
   }));
 };
 
+const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date): Promise<GoogleCalendarEvent[]> => {
+  try {
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('calendar_tokens')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (tokenError || !tokenData) {
+      console.error('No calendar token found:', tokenError);
+      return [];
+    }
+
+    // Format the date range for the API request
+    const timeMin = format(weekStart, "yyyy-MM-dd'T'00:00:00'Z'");
+    const timeMax = format(addDays(weekStart, 7), "yyyy-MM-dd'T'00:00:00'Z'");
+
+    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}`, {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch calendar events');
+    }
+
+    const data = await response.json();
+    console.log('Google Calendar events:', data);
+
+    return data.items.map((event: any) => {
+      const startDate = new Date(event.start.dateTime || event.start.date);
+      return {
+        id: event.id,
+        name: event.summary,
+        startTime: format(startDate, 'HH:mm'),
+        endTime: format(new Date(event.end.dateTime || event.end.date), 'HH:mm'),
+        day: startDate.getDay(),
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching Google Calendar events:', error);
+    return [];
+  }
+};
+
 export default function CalendarView() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -64,13 +118,20 @@ export default function CalendarView() {
     return { date, dayIndex: i };
   });
 
-  const { data: scheduledHabits = [], isLoading, error } = useQuery({
+  const { data: scheduledHabits = [], isLoading: habitsLoading } = useQuery({
     queryKey: ["scheduledHabits", user?.id],
     queryFn: () => fetchScheduledHabits(user?.id || ""),
     enabled: !!user
   });
 
+  const { data: googleEvents = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ["googleCalendarEvents", user?.id, currentWeekStart],
+    queryFn: () => fetchGoogleCalendarEvents(user?.id || "", currentWeekStart),
+    enabled: !!user
+  });
+
   console.log('Current scheduled habits:', scheduledHabits);
+  console.log('Google Calendar events:', googleEvents);
 
   const handleGoogleCalendarConnect = async () => {
     if (!user) {
@@ -89,7 +150,6 @@ export default function CalendarView() {
 
       if (error) throw error;
 
-      // Redirect to Google's OAuth consent screen
       window.location.href = data.url;
     } catch (error) {
       console.error('Error connecting to Google Calendar:', error);
@@ -105,6 +165,8 @@ export default function CalendarView() {
     setCurrentWeekStart(newDate);
   };
 
+  const isLoading = habitsLoading || eventsLoading;
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -113,13 +175,14 @@ export default function CalendarView() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-destructive">Failed to load calendar data</p>
-      </div>
-    );
-  }
+  // Combine scheduled habits and Google Calendar events
+  const allEvents = [
+    ...scheduledHabits,
+    ...googleEvents.map(event => ({
+      ...event,
+      sphere: 'google-calendar' // Add a special sphere for Google Calendar events
+    }))
+  ];
 
   return (
     <div className="flex h-screen flex-col">
@@ -136,7 +199,7 @@ export default function CalendarView() {
       <div className="flex-1 overflow-hidden">
         <CalendarGrid 
           weekDays={weekDays}
-          scheduledHabits={scheduledHabits}
+          scheduledHabits={allEvents}
         />
       </div>
     </div>

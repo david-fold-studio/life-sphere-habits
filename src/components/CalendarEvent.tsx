@@ -38,14 +38,15 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
   const durationInMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
   const shouldWrapText = durationInMinutes >= 30;
 
+  const backgroundColor = sphere === 'google-calendar' 
+    ? 'bg-blue-500 text-white' 
+    : `bg-[var(--sphere-${sphere})]`;
+
   return (
     <Card
       key={id}
-      className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden z-20`}
-      style={{
-        ...getEventStyle(startTime, endTime),
-        backgroundColor: `var(--sphere-${sphere})`,
-      }}
+      className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden z-20 ${backgroundColor}`}
+      style={getEventStyle(startTime, endTime)}
     >
       <div className={`font-medium text-xs ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
         {name}
