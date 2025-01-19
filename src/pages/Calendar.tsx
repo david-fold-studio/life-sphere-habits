@@ -1,13 +1,12 @@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek } from "date-fns";
+import { startOfWeek, addDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarWeekHeader } from "@/components/CalendarWeekHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
-import { addDays } from "date-fns";
 
 interface ScheduledHabit {
   id: string;
@@ -66,7 +65,6 @@ export default function CalendarView() {
   });
 
   const handleGoogleCalendarConnect = async () => {
-    // Handle Google Calendar connection logic
     toast({
       title: "Coming soon",
       description: "Google Calendar integration will be available soon.",
@@ -90,14 +88,17 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="flex h-screen flex-col p-8">
-      <CalendarHeader
-        weekStart={weekStart}
-        onConnectCalendar={handleGoogleCalendarConnect}
-      />
-
-      <div className="flex-1 overflow-hidden">
+    <div className="flex h-screen flex-col">
+      <div className="flex-none p-8 pb-0">
+        <CalendarHeader
+          weekStart={weekStart}
+          onConnectCalendar={handleGoogleCalendarConnect}
+        />
+      </div>
+      <div className="flex-none">
         <CalendarWeekHeader weekDays={weekDays} />
+      </div>
+      <div className="flex-1 overflow-hidden">
         <CalendarGrid 
           weekDays={weekDays}
           scheduledHabits={scheduledHabits}
