@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SphereTitleSection } from "./SphereTitleSection";
 import { GoalCard } from "./GoalCard";
+import { AddGoalForm } from "./AddGoalForm";
 
 interface Habit {
   id: string;
@@ -24,16 +26,33 @@ interface LifeSphereCardProps {
 }
 
 export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCardProps) {
+  const [isAddingGoal, setIsAddingGoal] = useState(false);
   const borderColorClass = className?.split(' ').find(cls => cls.startsWith('border-')) || '';
+
+  const handleSaveGoal = (goalTitle: string, targetDate: Date) => {
+    // TODO: Implement save functionality
+    console.log('Save goal:', { goalTitle, targetDate });
+    setIsAddingGoal(false);
+  };
 
   return (
     <Card className={cn("transition-all hover:shadow-lg border-2", className)}>
       <CardContent className="p-6">
         <div className="flex flex-col gap-6">
-          <SphereTitleSection icon={icon} title={title} />
+          <SphereTitleSection 
+            icon={icon} 
+            title={title} 
+            onAddGoal={() => setIsAddingGoal(true)} 
+          />
           
           {/* Goals Grid Container - 1 column on mobile, 2 on tablet, 2 on desktop (in remaining 2/3 space) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:w-2/3">
+            {isAddingGoal && (
+              <AddGoalForm
+                onSave={handleSaveGoal}
+                onCancel={() => setIsAddingGoal(false)}
+              />
+            )}
             {goals.slice(0, 2).map((goal) => (
               <GoalCard
                 key={goal.id}
