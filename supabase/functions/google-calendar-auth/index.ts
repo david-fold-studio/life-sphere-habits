@@ -26,8 +26,8 @@ serve(async (req) => {
       )
     }
 
-    const state = crypto.randomUUID()
-    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-auth`
+    // Use the exact redirect URI that's configured in Google Cloud Console
+    const redirectUri = 'https://yrrnprfymzagkxcwycrk.supabase.co/functions/v1/google-calendar-callback'
     
     const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
     googleAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID)
@@ -35,7 +35,7 @@ serve(async (req) => {
     googleAuthUrl.searchParams.append('response_type', 'code')
     googleAuthUrl.searchParams.append('scope', 'https://www.googleapis.com/auth/calendar.readonly')
     googleAuthUrl.searchParams.append('access_type', 'offline')
-    googleAuthUrl.searchParams.append('state', state)
+    googleAuthUrl.searchParams.append('state', crypto.randomUUID())
     googleAuthUrl.searchParams.append('prompt', 'consent')
 
     console.log('Generated auth URL:', googleAuthUrl.toString())
