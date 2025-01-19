@@ -13,14 +13,22 @@ serve(async (req) => {
   try {
     const { eventId, startTime, endTime, date, timeZone } = await req.json()
     
-    console.log('Updating Google Calendar event:', { eventId, startTime, endTime, date, timeZone })
+    console.log('Received request:', { eventId, startTime, endTime, date, timeZone })
 
-    // Get the date part from the provided date
+    // Extract the date part from the provided date
     const datePart = date.split('T')[0]
     
-    // Format the datetime strings properly for Google Calendar API
-    const formattedStart = `${datePart}T${startTime}:00`
-    const formattedEnd = `${datePart}T${endTime}:00`
+    // Format the datetime strings
+    const startDateTime = `${datePart}T${startTime}:00`
+    const endDateTime = `${datePart}T${endTime}:00`
+
+    console.log('Formatted dates:', {
+      startDateTime,
+      endDateTime,
+      timeZone,
+      originalTimes: { startTime, endTime },
+      originalDate: date
+    })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -52,12 +60,12 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           start: {
-            dateTime: formattedStart,
-            timeZone: timeZone
+            dateTime: startDateTime,
+            timeZone
           },
           end: {
-            dateTime: formattedEnd,
-            timeZone: timeZone
+            dateTime: endDateTime,
+            timeZone
           },
         }),
       }
