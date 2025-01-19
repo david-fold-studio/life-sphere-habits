@@ -31,6 +31,8 @@ export function CalendarEvent({
   onEventUpdate,
   onEventDelete 
 }: CalendarEventProps) {
+  console.log('Rendering CalendarEvent:', { id, name, isOwner, sphere });
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
@@ -45,9 +47,12 @@ export function CalendarEvent({
     sphere,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
+      console.log('Event update triggered:', { id, newStartTime, newEndTime });
       if (isRecurring || hasInvitees) {
+        console.log('Opening update dialog for recurring/invited event');
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
+        console.log('Updating event directly');
         onEventUpdate(id, newStartTime, newEndTime);
       }
     }
@@ -72,8 +77,15 @@ export function CalendarEvent({
           ...calculateEventStyle(startTime, endTime, isDragging),
           cursor
         }}
-        onMouseDown={(e) => !isOwner ? null : handleMouseDown(e)}
-        onClick={() => setDialogOpen(true)}
+        onMouseDown={(e) => {
+          console.log('Card mouse down event:', { id, isOwner });
+          if (!isOwner) return;
+          handleMouseDown(e);
+        }}
+        onClick={() => {
+          console.log('Card clicked:', id);
+          setDialogOpen(true);
+        }}
       >
         {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
         <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
@@ -100,6 +112,7 @@ export function CalendarEvent({
           isRecurring={isRecurring}
           hasInvitees={hasInvitees}
           onUpdate={(updateType, notifyInvitees) => {
+            console.log('Update dialog confirmed:', { updateType, notifyInvitees });
             if (onEventUpdate) {
               onEventUpdate(id, startTime, endTime, updateType, notifyInvitees);
             }
