@@ -31,12 +31,18 @@ interface ScheduledHabitRow {
 }
 
 const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> => {
+  console.log('Fetching habits for user:', userId);
   const { data, error } = await supabase
     .from("scheduled_habits")
     .select("*")
     .eq("user_id", userId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Error fetching habits:', error);
+    throw new Error(error.message);
+  }
+  
+  console.log('Fetched habits:', data);
   
   return (data || []).map((habit: ScheduledHabitRow) => ({
     id: habit.id,
@@ -63,6 +69,8 @@ export default function CalendarView() {
     queryFn: () => fetchScheduledHabits(user?.id || ""),
     enabled: !!user
   });
+
+  console.log('Current scheduled habits:', scheduledHabits);
 
   const handleGoogleCalendarConnect = async () => {
     toast({
