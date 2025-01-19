@@ -21,7 +21,7 @@ export function CalendarDayColumn({ date, dayIndex, scheduledHabits }: CalendarD
   
   return (
     <div className="flex-1 relative border-l first:border-l-0">
-      <div className="h-16 border-b p-2 text-center bg-background">
+      <div className="h-16 border-b p-2 text-center sticky top-0 bg-background">
         <div className="font-semibold">{format(date, "EEE")}</div>
         <div className="text-sm text-muted-foreground">{format(date, "MMM d")}</div>
       </div>
