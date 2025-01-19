@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { SphereTitleSection } from "./SphereTitleSection";
 import { GoalCard } from "./GoalCard";
 import { AddGoalForm } from "./AddGoalForm";
+import { v4 as uuidv4 } from "@/lib/utils";
 
 interface Habit {
   id: string;
@@ -25,13 +26,20 @@ interface LifeSphereCardProps {
   className?: string;
 }
 
-export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCardProps) {
+export function LifeSphereCard({ title, icon, goals: initialGoals, className }: LifeSphereCardProps) {
   const [isAddingGoal, setIsAddingGoal] = useState(false);
+  const [goals, setGoals] = useState<Goal[]>(initialGoals);
   const borderColorClass = className?.split(' ').find(cls => cls.startsWith('border-')) || '';
 
   const handleSaveGoal = (goalTitle: string, targetDate: Date) => {
-    // TODO: Implement save functionality
-    console.log('Save goal:', { goalTitle, targetDate });
+    const newGoal: Goal = {
+      id: uuidv4(),
+      name: goalTitle,
+      targetDate: targetDate.toISOString(),
+      habits: [],
+    };
+    
+    setGoals([...goals, newGoal]);
     setIsAddingGoal(false);
   };
 
@@ -45,7 +53,6 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
             onAddGoal={() => setIsAddingGoal(true)} 
           />
           
-          {/* Goals Grid Container - 1 column on mobile, 2 on tablet, 2 on desktop (in remaining 2/3 space) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:w-2/3">
             {isAddingGoal && (
               <AddGoalForm
@@ -53,7 +60,7 @@ export function LifeSphereCard({ title, icon, goals, className }: LifeSphereCard
                 onCancel={() => setIsAddingGoal(false)}
               />
             )}
-            {goals.slice(0, 2).map((goal) => (
+            {goals.map((goal) => (
               <GoalCard
                 key={goal.id}
                 name={goal.name}
