@@ -20,27 +20,11 @@ serve(async (req) => {
     const [startHour, startMinute] = startTime.split(':')
     const [endHour, endMinute] = endTime.split(':')
 
-    // Create Date objects and format them as ISO strings
-    const startDate = new Date(Date.UTC(
-      parseInt(year),
-      parseInt(month) - 1, // JavaScript months are 0-based
-      parseInt(day),
-      parseInt(startHour),
-      parseInt(startMinute)
-    ))
+    // Format the datetime strings in RFC3339 format with the event's timezone
+    const startDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00${timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''}`
+    const endDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00${timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''}`
 
-    const endDate = new Date(Date.UTC(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      parseInt(endHour),
-      parseInt(endMinute)
-    ))
-
-    const startDateTime = startDate.toISOString()
-    const endDateTime = endDate.toISOString()
-
-    console.log('Formatted dates:', {
+    console.log('Formatted dates for Google Calendar:', {
       startDateTime,
       endDateTime,
       timeZone,
@@ -131,7 +115,11 @@ serve(async (req) => {
       console.error('Google Calendar API error:', {
         status: googleResponse.status,
         statusText: googleResponse.statusText,
-        error: errorText
+        error: errorText,
+        requestBody: {
+          start: { dateTime: startDateTime, timeZone },
+          end: { dateTime: endDateTime, timeZone }
+        }
       })
       throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
     }
