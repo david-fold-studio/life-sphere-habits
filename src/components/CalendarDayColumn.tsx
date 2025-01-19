@@ -47,6 +47,7 @@ export function CalendarDayColumn({
               startTime={habit.startTime}
               endTime={habit.endTime}
               sphere={habit.sphere}
+              day={habit.day}
               onEventUpdate={onEventUpdate}
               onEventDelete={onEventDelete}
             />
