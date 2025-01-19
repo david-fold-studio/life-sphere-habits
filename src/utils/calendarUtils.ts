@@ -51,9 +51,26 @@ export const fetchScheduledHabits = async (userId: string): Promise<ScheduledHab
   }));
 };
 
+const refreshGoogleToken = async (userId: string, refreshToken: string) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('google-calendar-refresh', {
+      body: { 
+        refresh_token: refreshToken,
+        user_id: userId
+      }
+    });
+
+    if (error) throw error;
+    return data.access_token;
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    throw error;
+  }
+};
+
 export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date): Promise<GoogleCalendarEvent[]> => {
   try {
-    // First, get the user's calendar token
+    // Get the user's calendar token
     const { data: tokenData, error: tokenError } = await supabase
       .from('calendar_tokens')
       .select('*')
@@ -70,18 +87,27 @@ export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date)
       return [];
     }
 
+    // Check if token is expired
+    const now = new Date();
+    const tokenExpiry = new Date(tokenData.expires_at);
+    let accessToken = tokenData.access_token;
+
+    if (tokenExpiry <= now && tokenData.refresh_token) {
+      console.log('Token expired, refreshing...');
+      accessToken = await refreshGoogleToken(userId, tokenData.refresh_token);
+    }
+
     // Format the date range for the API request
     const timeMin = format(weekStart, "yyyy-MM-dd'T'00:00:00'Z'");
     const timeMax = format(addDays(weekStart, 7), "yyyy-MM-dd'T'00:00:00'Z'");
 
-    console.log('Fetching events with token:', tokenData.access_token);
-    console.log('Time range:', { timeMin, timeMax });
-
+    console.log('Making request with token:', accessToken);
+    
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}`,
       {
         headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       }
