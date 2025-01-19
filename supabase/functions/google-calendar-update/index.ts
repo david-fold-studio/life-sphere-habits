@@ -15,21 +15,45 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
-    // Parse the input date and times
-    const [year, month, day] = date.split('T')[0].split('-')
-    const [startHour, startMinute] = startTime.split(':')
-    const [endHour, endMinute] = endTime.split(':')
+    // Check if this is a recurring event
+    const isRecurring = eventId.includes('_R')
 
-    // Format the datetime strings in RFC3339 format with the event's timezone
-    const startDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${startHour.padStart(2, '0')}:${startMinute.padStart(2, '0')}:00${timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''}`
-    const endDateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${endHour.padStart(2, '0')}:${endMinute.padStart(2, '0')}:00${timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''}`
+    // For recurring events, we need to use the original event date
+    let eventDate = date
+    if (isRecurring) {
+      // Extract the date from the recurring event ID (format: originalEventId_R20250107T233000)
+      const dateFromId = eventId.split('_R')[1]
+      if (dateFromId) {
+        const year = dateFromId.substring(0, 4)
+        const month = dateFromId.substring(4, 6)
+        const day = dateFromId.substring(6, 8)
+        eventDate = `${year}-${month}-${day}T00:00:00Z`
+      }
+    }
+
+    // Parse the event date
+    const eventDateTime = new Date(eventDate)
+    const year = eventDateTime.getUTCFullYear()
+    const month = String(eventDateTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(eventDateTime.getUTCDate()).padStart(2, '0')
+
+    // Format times with proper padding
+    const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
+    const [endHour, endMinute] = endTime.split(':').map(n => String(n).padStart(2, '0'))
+
+    // Format the datetime strings in RFC3339 format
+    const formattedTimeZone = timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''
+    const startDateTime = `${year}-${month}-${day}T${startHour}:${startMinute}:00${formattedTimeZone}`
+    const endDateTime = `${year}-${month}-${day}T${endHour}:${endMinute}:00${formattedTimeZone}`
 
     console.log('Formatted dates for Google Calendar:', {
       startDateTime,
       endDateTime,
       timeZone,
       originalTimes: { startTime, endTime },
-      originalDate: date
+      originalDate: date,
+      isRecurring,
+      eventId
     })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -46,21 +70,21 @@ serve(async (req) => {
           apikey: supabaseServiceKey,
         },
       }
-    );
+    )
 
     if (!profileResponse.ok) {
-      console.error('Failed to fetch profile:', await profileResponse.text());
-      throw new Error('Failed to fetch profile');
+      console.error('Failed to fetch profile:', await profileResponse.text())
+      throw new Error('Failed to fetch profile')
     }
 
-    const profileData = await profileResponse.json();
-    console.log('Profile data:', profileData);
+    const profileData = await profileResponse.json()
+    console.log('Profile data:', profileData)
 
     if (!profileData || profileData.length === 0) {
-      throw new Error('Profile not found');
+      throw new Error('Profile not found')
     }
 
-    const profileId = profileData[0].id;
+    const profileId = profileData[0].id
     
     // Now get the calendar token using the profile ID
     const tokenResponse = await fetch(
@@ -71,23 +95,23 @@ serve(async (req) => {
           apikey: supabaseServiceKey,
         },
       }
-    );
+    )
 
     if (!tokenResponse.ok) {
-      console.error('Failed to fetch token:', await tokenResponse.text());
-      throw new Error('Failed to fetch token');
+      console.error('Failed to fetch token:', await tokenResponse.text())
+      throw new Error('Failed to fetch token')
     }
 
-    const tokenData = await tokenResponse.json();
-    console.log('Token data response:', tokenData);
+    const tokenData = await tokenResponse.json()
+    console.log('Token data response:', tokenData)
 
     if (!tokenData || !tokenData[0] || !tokenData[0].access_token) {
-      console.error('No token found for profile:', profileId);
-      throw new Error('No valid token found');
+      console.error('No token found for profile:', profileId)
+      throw new Error('No valid token found')
     }
 
-    const accessToken = tokenData[0].access_token;
-    console.log('Successfully retrieved access token');
+    const accessToken = tokenData[0].access_token
+    console.log('Successfully retrieved access token')
 
     const googleResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
