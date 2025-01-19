@@ -26,5 +26,5 @@ enabled = true
 enabled = true
 
 [[functions]]
-name = "google-calendar-auth"
+[functions.google-calendar-auth]
 verify_jwt = false
