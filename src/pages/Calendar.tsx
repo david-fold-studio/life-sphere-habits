@@ -15,32 +15,61 @@ const CalendarView = () => {
   const { data: calendarToken, isLoading } = useQuery({
     queryKey: ['calendar-token', user?.id],
     queryFn: async () => {
+      if (!user?.id) {
+        console.log('No user ID available for calendar token query');
+        return null;
+      }
+
+      console.log('Fetching calendar token for user:', user.id);
       const { data, error } = await supabase
         .from('calendar_tokens')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching calendar token:', error);
+        throw error;
+      }
+      
+      console.log('Calendar token query result:', data);
       return data;
     },
     enabled: !!user?.id,
   });
 
   const handleConnectCalendar = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to connect your Google Calendar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      console.log('Starting Google Calendar authorization for user:', user.id);
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         method: 'POST',
+        body: { user_id: user.id },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+      
+      console.log('Authorization URL response:', data);
       
       if (data?.url) {
+        console.log('Redirecting to:', data.url);
         window.location.href = data.url;
       } else {
+        console.error('No URL returned from authorization endpoint');
         toast({
           title: "Error",
-          description: "Failed to start Google Calendar authorization",
+          description: "Failed to start Google Calendar authorization - No URL returned",
           variant: "destructive",
         });
       }
@@ -142,7 +171,10 @@ const CalendarView = () => {
         </div>
         
         {!calendarToken && (
-          <Button onClick={handleConnectCalendar}>
+          <Button 
+            onClick={handleConnectCalendar}
+            className="relative"
+          >
             Connect Google Calendar
           </Button>
         )}

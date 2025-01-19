@@ -26,6 +26,21 @@ serve(async (req) => {
       )
     }
 
+    // Parse the request body to get the user ID
+    const { user_id } = await req.json();
+    console.log('Received request for user:', user_id);
+
+    if (!user_id) {
+      console.error('No user ID provided');
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+
     // Use the exact redirect URI that's configured in Google Cloud Console
     const redirectUri = 'https://yrrnprfymzagkxcwycrk.supabase.co/functions/v1/google-calendar-callback'
     
@@ -40,7 +55,7 @@ serve(async (req) => {
       'https://www.googleapis.com/auth/calendar.events'
     ].join(' '))
     googleAuthUrl.searchParams.append('access_type', 'offline')
-    googleAuthUrl.searchParams.append('state', crypto.randomUUID())
+    googleAuthUrl.searchParams.append('state', user_id)
     googleAuthUrl.searchParams.append('prompt', 'consent')
 
     console.log('Generated auth URL:', googleAuthUrl.toString())
