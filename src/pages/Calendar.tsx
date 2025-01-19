@@ -39,45 +39,48 @@ const CalendarView = () => {
   });
 
   const handleConnectCalendar = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to connect your Google Calendar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to connect your Google Calendar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Starting Google Calendar authorization for user:', user.id);
-      // Update the function name to match exactly what's in Supabase
       const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
         body: { user_id: user.id },
       });
-      
+
       if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
+        console.error('Error invoking function:', error);
+        toast({
+          title: "Error",
+          description: "Failed to start Google Calendar authorization. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
-      
-      console.log('Authorization URL response:', data);
-      
-      if (data?.url) {
-        console.log('Redirecting to:', data.url);
-        window.location.href = data.url;
-      } else {
+
+      if (!data?.url) {
         console.error('No URL returned from authorization endpoint');
         toast({
           title: "Error",
-          description: "Failed to start Google Calendar authorization - No URL returned",
+          description: "Failed to get authorization URL. Please try again.",
           variant: "destructive",
         });
+        return;
       }
+
+      console.log('Redirecting to:', data.url);
+      window.location.href = data.url;
     } catch (error) {
       console.error('Error connecting to Google Calendar:', error);
       toast({
         title: "Error",
-        description: "Failed to connect to Google Calendar. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
@@ -160,6 +163,8 @@ const CalendarView = () => {
     );
   }
 
+  const showConnectButton = !isLoading && !calendarToken;
+
   return (
     <div className="container mx-auto p-4 py-8">
       <header className="mb-8 flex items-center justify-between">
@@ -170,7 +175,7 @@ const CalendarView = () => {
           </p>
         </div>
         
-        {!calendarToken && (
+        {showConnectButton && (
           <Button 
             onClick={handleConnectCalendar}
             className="relative"
