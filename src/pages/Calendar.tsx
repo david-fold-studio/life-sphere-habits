@@ -171,14 +171,12 @@ const CalendarView = () => {
           </p>
         </div>
         
-        {!calendarToken && (
-          <Button 
-            onClick={handleConnectCalendar}
-            className="relative"
-          >
-            Connect Google Calendar
-          </Button>
-        )}
+        <Button 
+          onClick={handleConnectCalendar}
+          className="relative"
+        >
+          Connect Google Calendar
+        </Button>
       </header>
 
       <div className="flex">
