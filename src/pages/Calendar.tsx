@@ -29,10 +29,13 @@ const CalendarView = () => {
 
   const handleConnectCalendar = async () => {
     try {
-      const response = await fetch('/functions/v1/google-calendar-auth/authorize');
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        method: 'POST',
+      });
       
-      if (data.url) {
+      if (error) throw error;
+      
+      if (data?.url) {
         window.location.href = data.url;
       } else {
         toast({
@@ -45,7 +48,7 @@ const CalendarView = () => {
       console.error('Error connecting to Google Calendar:', error);
       toast({
         title: "Error",
-        description: "Failed to connect to Google Calendar",
+        description: "Failed to connect to Google Calendar. Please try again.",
         variant: "destructive",
       });
     }
