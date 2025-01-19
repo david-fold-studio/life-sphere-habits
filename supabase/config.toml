@@ -28,3 +28,7 @@ enabled = true
 [[functions]]
 [functions.google-calendar-auth]
 verify_jwt = false
+
+[[functions]]
+[functions.google-calendar-callback]
+verify_jwt = false
