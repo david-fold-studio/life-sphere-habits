@@ -35,13 +35,13 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
   return (
     <Card
       key={id}
-      className={`absolute left-0 right-0 mx-1 p-2 overflow-hidden`}
+      className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden`}
       style={{
         ...getEventStyle(startTime, endTime),
         backgroundColor: `var(--sphere-${sphere})`,
       }}
     >
-      <div className="font-medium text-sm truncate">{name}</div>
+      <div className="font-medium text-xs truncate">{name}</div>
     </Card>
   );
 }
