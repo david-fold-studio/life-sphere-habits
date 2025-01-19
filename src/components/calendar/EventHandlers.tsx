@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { calculateNewTimes, calculateResizeTime } from "./EventDragLogic";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseEventHandlersProps {
   id: string;
@@ -18,6 +19,7 @@ export const useEventHandlers = ({
   isOwner,
   onEventUpdate,
 }: UseEventHandlersProps) => {
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<'top' | 'bottom' | null>(null);
   const dragStartY = useRef<number>(0);
@@ -27,20 +29,22 @@ export const useEventHandlers = ({
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef<'top' | 'bottom' | null>(null);
   const lastUpdateTime = useRef<number>(0);
-  const THROTTLE_MS = 50; // Throttle updates to 50ms
+  const updateTimeoutRef = useRef<number | null>(null);
+  const THROTTLE_MS = 250; // Increase throttle to 250ms
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
-    if (!isOwner) {
-      console.log('Not owner, ignoring mouse down');
-      return;
-    }
+    if (!isOwner) return;
 
     e.preventDefault();
     
-    // Clean up any existing handlers first
+    // Clean up any existing handlers and timeouts
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
+    }
+    if (updateTimeoutRef.current) {
+      window.clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
     }
     
     if (type) {
@@ -49,10 +53,11 @@ export const useEventHandlers = ({
       isResizingRef.current = type;
       setIsDragging(false);
       isDraggingRef.current = false;
-    } 
-    else if (!isResizingRef.current) {
+    } else {
       setIsDragging(true);
       isDraggingRef.current = true;
+      setIsResizing(null);
+      isResizingRef.current = null;
     }
     
     dragStartY.current = e.clientY;
@@ -62,29 +67,43 @@ export const useEventHandlers = ({
 
     const moveHandler = (e: MouseEvent) => {
       const now = Date.now();
-      if (now - lastUpdateTime.current < THROTTLE_MS) {
-        return; // Skip this update if we're within the throttle window
+      if (now - lastUpdateTime.current < THROTTLE_MS) return;
+
+      // Clear any pending updates
+      if (updateTimeoutRef.current) {
+        window.clearTimeout(updateTimeoutRef.current);
       }
 
       const deltaY = e.clientY - dragStartY.current;
       
-      if (isResizingRef.current) {
-        const { newStartTime, newEndTime } = calculateResizeTime(
-          originalStartTime.current,
-          originalEndTime.current,
-          deltaY,
-          isResizingRef.current
-        );
-        onEventUpdate(id, newStartTime, newEndTime);
-      } 
-      else if (isDraggingRef.current) {
-        const { newStartTime, newEndTime } = calculateNewTimes(
-          originalStartTime.current,
-          originalEndTime.current,
-          deltaY
-        );
-        onEventUpdate(id, newStartTime, newEndTime);
-      }
+      // Schedule the update
+      updateTimeoutRef.current = window.setTimeout(() => {
+        try {
+          if (isResizingRef.current) {
+            const { newStartTime, newEndTime } = calculateResizeTime(
+              originalStartTime.current,
+              originalEndTime.current,
+              deltaY,
+              isResizingRef.current
+            );
+            onEventUpdate(id, newStartTime, newEndTime);
+          } else if (isDraggingRef.current) {
+            const { newStartTime, newEndTime } = calculateNewTimes(
+              originalStartTime.current,
+              originalEndTime.current,
+              deltaY
+            );
+            onEventUpdate(id, newStartTime, newEndTime);
+          }
+        } catch (error) {
+          console.error('Error updating event:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update the event. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }, THROTTLE_MS);
       
       lastUpdateTime.current = now;
     };
@@ -95,6 +114,11 @@ export const useEventHandlers = ({
   };
 
   const handleMouseUp = () => {
+    if (updateTimeoutRef.current) {
+      window.clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = null;
+    }
+    
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;

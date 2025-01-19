@@ -14,7 +14,10 @@ serve(async (req) => {
   try {
     const { eventId, startTime, endTime, date, user_id } = await req.json();
     
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id });
+    
     if (!eventId || !startTime || !endTime || !date || !user_id) {
+      console.error('Missing required parameters:', { eventId, startTime, endTime, date, user_id });
       throw new Error('Missing required parameters');
     }
 
@@ -30,12 +33,13 @@ serve(async (req) => {
       .single();
 
     if (tokenError || !tokenData) {
+      console.error('Token error:', tokenError);
       throw new Error('No valid token found');
     }
 
     // Convert time strings to RFC3339 format
-    const [hours, minutes] = startTime.split(':');
-    const [endHours, endMinutes] = endTime.split(':');
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
     
     const startDate = new Date(date);
     const endDate = new Date(date);
@@ -46,7 +50,8 @@ serve(async (req) => {
     console.log('Updating event:', {
       eventId,
       startDateTime: startDate.toISOString(),
-      endDateTime: endDate.toISOString()
+      endDateTime: endDate.toISOString(),
+      token: tokenData.access_token.substring(0, 10) + '...'
     });
 
     // Update the event in Google Calendar
@@ -67,21 +72,36 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Google Calendar API error:', errorData);
-      throw new Error('Failed to update calendar event');
+      console.error('Google Calendar API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText}`);
     }
 
+    const updatedEvent = await response.json();
+    console.log('Successfully updated event:', {
+      id: updatedEvent.id,
+      summary: updatedEvent.summary,
+      start: updatedEvent.start,
+      end: updatedEvent.end
+    });
+
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, event: updatedEvent }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
   } catch (error) {
-    console.error('Error updating event:', error);
+    console.error('Error in google-calendar-update:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
