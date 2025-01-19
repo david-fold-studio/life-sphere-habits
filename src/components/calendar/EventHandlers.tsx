@@ -28,23 +28,17 @@ export const useEventHandlers = ({
   const mouseMoveHandler = useRef<((e: MouseEvent) => void) | null>(null);
   const isDraggingRef = useRef(false);
   const isResizingRef = useRef<'top' | 'bottom' | null>(null);
-  const lastUpdateTime = useRef<number>(0);
-  const updateTimeoutRef = useRef<number | null>(null);
-  const THROTTLE_MS = 250; // Increase throttle to 250ms
+  const currentDeltaY = useRef<number>(0);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
     if (!isOwner) return;
 
     e.preventDefault();
     
-    // Clean up any existing handlers and timeouts
+    // Clean up any existing handlers
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
-    }
-    if (updateTimeoutRef.current) {
-      window.clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = null;
     }
     
     if (type) {
@@ -63,49 +57,34 @@ export const useEventHandlers = ({
     dragStartY.current = e.clientY;
     originalStartTime.current = startTime;
     originalEndTime.current = endTime;
-    lastUpdateTime.current = Date.now();
+    currentDeltaY.current = 0;
 
     const moveHandler = (e: MouseEvent) => {
-      const now = Date.now();
-      if (now - lastUpdateTime.current < THROTTLE_MS) return;
-
-      // Clear any pending updates
-      if (updateTimeoutRef.current) {
-        window.clearTimeout(updateTimeoutRef.current);
+      currentDeltaY.current = e.clientY - dragStartY.current;
+      
+      // Visual update without sending to server
+      if (isResizingRef.current) {
+        const { newStartTime, newEndTime } = calculateResizeTime(
+          originalStartTime.current,
+          originalEndTime.current,
+          currentDeltaY.current,
+          isResizingRef.current
+        );
+        // Update visual position only
+        document.dispatchEvent(new CustomEvent('visualTimeUpdate', {
+          detail: { id, newStartTime, newEndTime }
+        }));
+      } else if (isDraggingRef.current) {
+        const { newStartTime, newEndTime } = calculateNewTimes(
+          originalStartTime.current,
+          originalEndTime.current,
+          currentDeltaY.current
+        );
+        // Update visual position only
+        document.dispatchEvent(new CustomEvent('visualTimeUpdate', {
+          detail: { id, newStartTime, newEndTime }
+        }));
       }
-
-      const deltaY = e.clientY - dragStartY.current;
-      
-      // Schedule the update
-      updateTimeoutRef.current = window.setTimeout(() => {
-        try {
-          if (isResizingRef.current) {
-            const { newStartTime, newEndTime } = calculateResizeTime(
-              originalStartTime.current,
-              originalEndTime.current,
-              deltaY,
-              isResizingRef.current
-            );
-            onEventUpdate(id, newStartTime, newEndTime);
-          } else if (isDraggingRef.current) {
-            const { newStartTime, newEndTime } = calculateNewTimes(
-              originalStartTime.current,
-              originalEndTime.current,
-              deltaY
-            );
-            onEventUpdate(id, newStartTime, newEndTime);
-          }
-        } catch (error) {
-          console.error('Error updating event:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update the event. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }, THROTTLE_MS);
-      
-      lastUpdateTime.current = now;
     };
 
     mouseMoveHandler.current = moveHandler;
@@ -114,21 +93,46 @@ export const useEventHandlers = ({
   };
 
   const handleMouseUp = () => {
-    if (updateTimeoutRef.current) {
-      window.clearTimeout(updateTimeoutRef.current);
-      updateTimeoutRef.current = null;
-    }
-    
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
+    // Only update the server when the mouse is released
+    if (currentDeltaY.current !== 0) {
+      try {
+        if (isResizingRef.current) {
+          const { newStartTime, newEndTime } = calculateResizeTime(
+            originalStartTime.current,
+            originalEndTime.current,
+            currentDeltaY.current,
+            isResizingRef.current
+          );
+          onEventUpdate(id, newStartTime, newEndTime);
+        } else if (isDraggingRef.current) {
+          const { newStartTime, newEndTime } = calculateNewTimes(
+            originalStartTime.current,
+            originalEndTime.current,
+            currentDeltaY.current
+          );
+          onEventUpdate(id, newStartTime, newEndTime);
+        }
+      } catch (error) {
+        console.error('Error updating event:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update the event. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+    
     isDraggingRef.current = false;
     isResizingRef.current = null;
     setIsDragging(false);
     setIsResizing(null);
+    currentDeltaY.current = 0;
   };
 
   return {

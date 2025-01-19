@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import { EventDialog } from "./calendar/EventDialog";
 import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
@@ -33,6 +33,8 @@ export const CalendarEvent = memo(function CalendarEvent({
 }: CalendarEventProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [visualStartTime, setVisualStartTime] = useState(startTime);
+  const [visualEndTime, setVisualEndTime] = useState(endTime);
 
   const {
     isDragging,
@@ -55,8 +57,28 @@ export const CalendarEvent = memo(function CalendarEvent({
     }
   });
 
-  const [startHours, startMinutes] = startTime.split(":").map(Number);
-  const [endHours, endMinutes] = endTime.split(":").map(Number);
+  useEffect(() => {
+    const handleVisualUpdate = (e: CustomEvent<{ id: string; newStartTime: string; newEndTime: string }>) => {
+      if (e.detail.id === id) {
+        setVisualStartTime(e.detail.newStartTime);
+        setVisualEndTime(e.detail.newEndTime);
+      }
+    };
+
+    document.addEventListener('visualTimeUpdate', handleVisualUpdate as EventListener);
+    return () => {
+      document.removeEventListener('visualTimeUpdate', handleVisualUpdate as EventListener);
+    };
+  }, [id]);
+
+  // Reset visual times when actual times change
+  useEffect(() => {
+    setVisualStartTime(startTime);
+    setVisualEndTime(endTime);
+  }, [startTime, endTime]);
+
+  const [startHours, startMinutes] = visualStartTime.split(":").map(Number);
+  const [endHours, endMinutes] = visualEndTime.split(":").map(Number);
   const durationInMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
   const shouldWrapText = durationInMinutes >= 30;
 
@@ -86,7 +108,7 @@ export const CalendarEvent = memo(function CalendarEvent({
       <Card
         className={`absolute left-0 right-0 mx-0.5 px-[0.5px] overflow-hidden z-20 ${backgroundColor} ${isDragging ? 'opacity-70' : ''}`}
         style={{
-          ...calculateEventStyle(startTime, endTime, isDragging),
+          ...calculateEventStyle(visualStartTime, visualEndTime, isDragging),
           cursor
         }}
         onMouseDown={handleCardMouseDown}
@@ -118,7 +140,7 @@ export const CalendarEvent = memo(function CalendarEvent({
           hasInvitees={hasInvitees}
           onUpdate={(updateType, notifyInvitees) => {
             if (onEventUpdate) {
-              onEventUpdate(id, startTime, endTime, updateType, notifyInvitees);
+              onEventUpdate(id, visualStartTime, visualEndTime, updateType, notifyInvitees);
             }
             setUpdateDialogOpen(false);
           }}
