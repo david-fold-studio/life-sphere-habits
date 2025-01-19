@@ -15,27 +15,11 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
-    // Check if this is a recurring event
-    const isRecurring = eventId.includes('_R')
-
-    // For recurring events, we need to use the original event date
-    let eventDate = date
-    if (isRecurring) {
-      // Extract the date from the recurring event ID (format: originalEventId_R20250107T233000)
-      const dateFromId = eventId.split('_R')[1]
-      if (dateFromId) {
-        const year = dateFromId.substring(0, 4)
-        const month = dateFromId.substring(4, 6)
-        const day = dateFromId.substring(6, 8)
-        eventDate = `${year}-${month}-${day}T00:00:00Z`
-      }
-    }
-
-    // Parse the event date
-    const eventDateTime = new Date(eventDate)
-    const year = eventDateTime.getUTCFullYear()
-    const month = String(eventDateTime.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(eventDateTime.getUTCDate()).padStart(2, '0')
+    // Parse the original event date from the provided date parameter
+    const eventDate = new Date(date)
+    const year = eventDate.getFullYear()
+    const month = String(eventDate.getMonth() + 1).padStart(2, '0')
+    const day = String(eventDate.getDate()).padStart(2, '0')
 
     // Format times with proper padding
     const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
@@ -52,7 +36,6 @@ serve(async (req) => {
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
-      isRecurring,
       eventId
     })
 
