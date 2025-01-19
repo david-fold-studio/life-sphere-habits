@@ -18,7 +18,7 @@ export function CalendarTimeSlots() {
       {timeSlots.map(({ hour, label }) => (
         <div 
           key={hour} 
-          className="h-[13px] border-t text-sm text-muted-foreground pr-2 text-right"
+          className="h-[32px] border-t text-sm text-muted-foreground pr-2 text-right"
         >
           {label}
         </div>
