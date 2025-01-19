@@ -17,22 +17,25 @@ serve(async (req) => {
 
     // Parse the original event date from the provided date parameter
     const eventDate = new Date(date)
-    const year = eventDate.getFullYear()
-    const month = String(eventDate.getMonth() + 1).padStart(2, '0')
-    const day = String(eventDate.getDate()).padStart(2, '0')
-
-    // Format times with proper padding
+    
+    // Format the full RFC3339 datetime strings
     const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
     const [endHour, endMinute] = endTime.split(':').map(n => String(n).padStart(2, '0'))
+    
+    // Create new date objects for start and end times
+    const startDateTime = new Date(eventDate)
+    startDateTime.setHours(parseInt(startHour, 10), parseInt(startMinute, 10), 0)
+    
+    const endDateTime = new Date(eventDate)
+    endDateTime.setHours(parseInt(endHour, 10), parseInt(endMinute, 10), 0)
 
-    // Format the datetime strings in RFC3339 format
-    const formattedTimeZone = timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''
-    const startDateTime = `${year}-${month}-${day}T${startHour}:${startMinute}:00${formattedTimeZone}`
-    const endDateTime = `${year}-${month}-${day}T${endHour}:${endMinute}:00${formattedTimeZone}`
+    // Format dates in RFC3339 format
+    const startDateTimeString = startDateTime.toISOString()
+    const endDateTimeString = endDateTime.toISOString()
 
     console.log('Formatted dates for Google Calendar:', {
-      startDateTime,
-      endDateTime,
+      startDateTime: startDateTimeString,
+      endDateTime: endDateTimeString,
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
@@ -44,7 +47,6 @@ serve(async (req) => {
     
     console.log('Fetching token for user:', user_id)
     
-    // First get the profile ID which is linked to the calendar tokens
     const profileResponse = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${user_id}&select=id`,
       {
@@ -69,7 +71,6 @@ serve(async (req) => {
 
     const profileId = profileData[0].id
     
-    // Now get the calendar token using the profile ID
     const tokenResponse = await fetch(
       `${supabaseUrl}/rest/v1/calendar_tokens?select=access_token&user_id=eq.${profileId}`,
       {
@@ -106,11 +107,11 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           start: {
-            dateTime: startDateTime,
+            dateTime: startDateTimeString,
             timeZone
           },
           end: {
-            dateTime: endDateTime,
+            dateTime: endDateTimeString,
             timeZone
           },
         }),
@@ -124,8 +125,8 @@ serve(async (req) => {
         statusText: googleResponse.statusText,
         error: errorText,
         requestBody: {
-          start: { dateTime: startDateTime, timeZone },
-          end: { dateTime: endDateTime, timeZone }
+          start: { dateTime: startDateTimeString, timeZone },
+          end: { dateTime: endDateTimeString, timeZone }
         }
       })
       throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
