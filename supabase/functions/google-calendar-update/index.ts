@@ -15,14 +15,18 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay })
 
-    // Get the event's current date from the start time
-    const eventDate = new Date(date)
+    // Parse the week start date and ensure it's valid
+    const weekStart = new Date(date)
+    if (isNaN(weekStart.getTime())) {
+      throw new Error('Invalid date provided')
+    }
+
+    // Set to the start of the week (Sunday)
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
     
-    // Calculate the target date by setting it to the correct day of the week
-    const targetDate = new Date(eventDate)
-    const currentDay = targetDate.getDay()
-    const daysToAdd = newDay - currentDay
-    targetDate.setDate(targetDate.getDate() + daysToAdd)
+    // Calculate target date by adding the column number (newDay) to week start
+    const targetDate = new Date(weekStart)
+    targetDate.setDate(weekStart.getDate() + (newDay || 0))
 
     // Format the date components
     const year = targetDate.getFullYear()
@@ -45,8 +49,8 @@ serve(async (req) => {
       originalTimes: { startTime, endTime },
       originalDate: date,
       targetDate: targetDate.toISOString(),
-      newDay,
-      daysToAdd
+      weekStart: weekStart.toISOString(),
+      newDay
     })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
