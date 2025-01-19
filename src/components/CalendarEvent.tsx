@@ -72,6 +72,25 @@ export function CalendarEvent({
 
   const cursor = isOwner ? (isDragging ? 'grabbing' : 'grab') : 'default';
 
+  const handleCardMouseDown = (e: React.MouseEvent) => {
+    console.log('Card mouse down event:', { id, isOwner, sphere });
+    if (!isOwner) return;
+    
+    // Only handle drag if we clicked directly on the card (not on resize handles)
+    const target = e.target as HTMLElement;
+    if (!target.closest('.resize-handle')) {
+      handleMouseDown(e);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    console.log('Card clicked:', id);
+    // Only open dialog if we're not dragging
+    if (!isDragging) {
+      setDialogOpen(true);
+    }
+  };
+
   return (
     <>
       <Card
@@ -80,15 +99,8 @@ export function CalendarEvent({
           ...calculateEventStyle(startTime, endTime, isDragging),
           cursor
         }}
-        onMouseDown={(e) => {
-          console.log('Card mouse down event:', { id, isOwner, sphere });
-          if (!isOwner) return;
-          handleMouseDown(e);
-        }}
-        onClick={() => {
-          console.log('Card clicked:', id);
-          setDialogOpen(true);
-        }}
+        onMouseDown={handleCardMouseDown}
+        onClick={handleCardClick}
       >
         {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
         <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
