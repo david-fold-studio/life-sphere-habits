@@ -15,19 +15,19 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
-    // Parse the original event date from the provided date parameter
-    const eventDate = new Date(date)
+    // Parse the date from the interface
+    const [year, month, day] = date.split('T')[0].split('-').map(Number)
     
-    // Format the full RFC3339 datetime strings
-    const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
-    const [endHour, endMinute] = endTime.split(':').map(n => String(n).padStart(2, '0'))
+    // Create date objects for start and end times using the interface date
+    const startDateTime = new Date(Date.UTC(year, month - 1, day))
+    const endDateTime = new Date(Date.UTC(year, month - 1, day))
     
-    // Create new date objects for start and end times
-    const startDateTime = new Date(eventDate)
-    startDateTime.setHours(parseInt(startHour, 10), parseInt(startMinute, 10), 0)
+    // Set the hours and minutes from the interface times
+    const [startHour, startMinute] = startTime.split(':').map(Number)
+    const [endHour, endMinute] = endTime.split(':').map(Number)
     
-    const endDateTime = new Date(eventDate)
-    endDateTime.setHours(parseInt(endHour, 10), parseInt(endMinute, 10), 0)
+    startDateTime.setUTCHours(startHour, startMinute, 0)
+    endDateTime.setUTCHours(endHour, endMinute, 0)
 
     // Format dates in RFC3339 format
     const startDateTimeString = startDateTime.toISOString()
@@ -39,6 +39,7 @@ serve(async (req) => {
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
+      parsedComponents: { year, month, day, startHour, startMinute, endHour, endMinute },
       eventId
     })
 
