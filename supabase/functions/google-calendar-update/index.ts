@@ -12,12 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, startTime, endTime, date, user_id } = await req.json();
+    const { eventId, startTime, endTime, date, user_id, timeZone } = await req.json();
     
-    console.log('Received request:', { eventId, startTime, endTime, date, user_id });
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone });
     
-    if (!eventId || !startTime || !endTime || !date || !user_id) {
-      console.error('Missing required parameters:', { eventId, startTime, endTime, date, user_id });
+    if (!eventId || !startTime || !endTime || !date || !user_id || !timeZone) {
+      console.error('Missing required parameters:', { eventId, startTime, endTime, date, user_id, timeZone });
       throw new Error('Missing required parameters');
     }
 
@@ -46,53 +46,30 @@ serve(async (req) => {
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
 
-    // Get user's timezone
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log('Using timezone:', userTimeZone);
-
-    // Create dates in the user's timezone
-    const startDate = new Date(
+    // Create the full ISO date-time strings with the user's timezone
+    const startDateTime = new Date(
       baseDate.getFullYear(),
       baseDate.getMonth(),
       baseDate.getDate(),
       startHours,
-      startMinutes,
-      0
-    );
-    
-    const endDate = new Date(
+      startMinutes
+    ).toLocaleString('sv', { timeZone });
+
+    const endDateTime = new Date(
       baseDate.getFullYear(),
       baseDate.getMonth(),
       baseDate.getDate(),
       endHours,
-      endMinutes,
-      0
-    );
+      endMinutes
+    ).toLocaleString('sv', { timeZone });
 
-    // Format the dates with timezone offset
-    const startDateTime = startDate.toLocaleString('sv', { timeZone: userTimeZone });
-    const endDateTime = endDate.toLocaleString('sv', { timeZone: userTimeZone });
-
-    console.log('Formatted dates:', { 
-      startDateTime, 
+    console.log('Formatted dates:', {
+      startDateTime,
       endDateTime,
-      timezone: userTimeZone,
+      timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date
     });
-
-    // Validate times
-    if (startDate >= endDate) {
-      return new Response(
-        JSON.stringify({
-          error: 'Invalid time range: start time must be before end time'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
-    }
 
     // Check if token is expired and refresh if needed
     const now = new Date();
@@ -150,12 +127,12 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: startDateTime,
-                timeZone: userTimeZone
+                dateTime: `${startDateTime}.000Z`,
+                timeZone
               },
               end: { 
-                dateTime: endDateTime,
-                timeZone: userTimeZone
+                dateTime: `${endDateTime}.000Z`,
+                timeZone
               },
             }),
           }

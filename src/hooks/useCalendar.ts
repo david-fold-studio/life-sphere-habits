@@ -30,13 +30,17 @@ export const useCalendar = (userId: string | undefined) => {
       if (isGoogleEvent) {
         console.log('Updating Google Calendar event:', { id, startTime, endTime });
         
+        // Get the user's timezone
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
         const { error } = await supabase.functions.invoke('google-calendar-update', {
           body: { 
             eventId: id,
             startTime,
             endTime,
             date: currentWeekStart.toISOString(),
-            user_id: userId
+            user_id: userId,
+            timeZone: userTimeZone
           }
         });
 
