@@ -37,11 +37,6 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Format the date-time strings by combining the date part with the time
-    const datePart = date.split('T')[0];
-    const startDateTime = `${datePart}T${startTime}:00`;
-    const endDateTime = `${datePart}T${endTime}:00`;
-
     // Check if token is expired and refresh if needed
     const now = new Date();
     const tokenExpiry = tokenData.expires_at ? new Date(tokenData.expires_at) : null;
@@ -88,9 +83,16 @@ serve(async (req) => {
 
     while (retryCount < maxRetries) {
       try {
-        const endpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
-        console.log('Making request to endpoint:', endpoint);
+        // Check if this is a recurring event instance
+        const isRecurringInstance = eventId.includes('_R');
+        const baseEventId = isRecurringInstance ? eventId.split('_R')[0] : eventId;
         
+        const endpoint = isRecurringInstance
+          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${baseEventId}/instances/${eventId}`
+          : `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
+        
+        console.log('Making request to endpoint:', endpoint);
+
         const response = await fetch(
           endpoint,
           {
@@ -101,11 +103,11 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: startDateTime,
+                dateTime: new Date(date).toISOString().split('T')[0] + `T${startTime}:00`,
                 timeZone
               },
               end: { 
-                dateTime: endDateTime,
+                dateTime: new Date(date).toISOString().split('T')[0] + `T${endTime}:00`,
                 timeZone
               },
             }),
