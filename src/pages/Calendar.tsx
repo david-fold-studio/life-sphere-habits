@@ -146,24 +146,27 @@ const CalendarView = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 py-8">
+    <div className="container mx-auto p-4 py-8 flex flex-col h-screen">
       <CalendarHeader 
         weekStart={weekStart}
         onConnectCalendar={handleConnectCalendar}
       />
 
-      <div className="flex">
-        <CalendarTimeSlots />
-
-        <div className="flex-grow flex">
-          {weekDays.map(({ date, dayIndex }) => (
-            <CalendarDayColumn
-              key={dayIndex}
-              date={date}
-              dayIndex={dayIndex}
-              scheduledHabits={scheduledHabits}
-            />
-          ))}
+      <div className="flex-1 overflow-hidden">
+        <div className="flex h-full">
+          <div className="flex overflow-y-auto">
+            <CalendarTimeSlots />
+            <div className="flex flex-1">
+              {weekDays.map(({ date, dayIndex }) => (
+                <CalendarDayColumn
+                  key={dayIndex}
+                  date={date}
+                  dayIndex={dayIndex}
+                  scheduledHabits={scheduledHabits}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
