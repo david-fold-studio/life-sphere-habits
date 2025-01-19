@@ -180,7 +180,7 @@ export function CalendarEvent({
     <>
       <Card
         key={id}
-        className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden z-20 ${backgroundColor} ${isDragging ? 'opacity-70' : ''}`}
+        className={`absolute left-0 right-0 mx-1 p-0.5 overflow-hidden z-20 ${backgroundColor} ${isDragging ? 'opacity-70' : ''}`}
         style={getEventStyle(startTime, endTime)}
         onMouseDown={handleMouseDown}
         onClick={() => setDialogOpen(true)}
