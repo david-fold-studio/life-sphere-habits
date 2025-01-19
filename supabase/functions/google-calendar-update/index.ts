@@ -46,22 +46,42 @@ serve(async (req) => {
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
 
-    // Create the full ISO date-time strings
-    const year = baseDate.getFullYear();
-    const month = String(baseDate.getMonth() + 1).padStart(2, '0');
-    const day = String(baseDate.getDate()).padStart(2, '0');
-    
-    const startDateTime = `${year}-${month}-${day}T${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}:00`;
-    const endDateTime = `${year}-${month}-${day}T${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`;
-
     // Get user's timezone
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     console.log('Using timezone:', userTimeZone);
-    console.log('Formatted dates:', { startDateTime, endDateTime });
+
+    // Create dates in the user's timezone
+    const startDate = new Date(
+      baseDate.getFullYear(),
+      baseDate.getMonth(),
+      baseDate.getDate(),
+      startHours,
+      startMinutes,
+      0
+    );
+    
+    const endDate = new Date(
+      baseDate.getFullYear(),
+      baseDate.getMonth(),
+      baseDate.getDate(),
+      endHours,
+      endMinutes,
+      0
+    );
+
+    // Format the dates with timezone offset
+    const startDateTime = startDate.toLocaleString('sv', { timeZone: userTimeZone });
+    const endDateTime = endDate.toLocaleString('sv', { timeZone: userTimeZone });
+
+    console.log('Formatted dates:', { 
+      startDateTime, 
+      endDateTime,
+      timezone: userTimeZone,
+      originalTimes: { startTime, endTime },
+      originalDate: date
+    });
 
     // Validate times
-    const startDate = new Date(startDateTime);
-    const endDate = new Date(endDateTime);
     if (startDate >= endDate) {
       return new Response(
         JSON.stringify({
