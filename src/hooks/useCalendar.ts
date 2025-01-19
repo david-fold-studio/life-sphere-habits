@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startOfWeek, addDays, format } from 'date-fns';
+import { startOfWeek, addDays } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,12 +29,6 @@ export const useCalendar = (userId: string | undefined) => {
       if (isGoogleEvent) {
         console.log('Updating Google Calendar event:', { id, startTime, endTime, newDay });
         
-        // Calculate the target date based on the week start and new day
-        let targetDate = currentWeekStart;
-        if (typeof newDay === 'number') {
-          targetDate = addDays(currentWeekStart, newDay);
-        }
-        
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         const { error } = await supabase.functions.invoke('google-calendar-update', {
@@ -42,7 +36,7 @@ export const useCalendar = (userId: string | undefined) => {
             eventId: id,
             startTime,
             endTime,
-            date: targetDate.toISOString(),
+            date: currentWeekStart.toISOString(),
             user_id: userId,
             timeZone: userTimeZone,
             newDay

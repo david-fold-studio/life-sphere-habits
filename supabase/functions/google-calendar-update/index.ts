@@ -11,31 +11,22 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, startTime, endTime, date, user_id, timeZone } = await req.json()
+    const { eventId, startTime, endTime, date, user_id, timeZone, newDay } = await req.json()
     
-    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay })
 
-    // Check if this is a recurring event
-    const isRecurring = eventId.includes('_R')
+    // Get the week's start date from the provided date
+    const weekStart = new Date(date)
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()) // Set to Sunday
 
-    // For recurring events, we need to use the original event date
-    let eventDate = date
-    if (isRecurring) {
-      // Extract the date from the recurring event ID (format: originalEventId_R20250107T233000)
-      const dateFromId = eventId.split('_R')[1]
-      if (dateFromId) {
-        const year = dateFromId.substring(0, 4)
-        const month = dateFromId.substring(4, 6)
-        const day = dateFromId.substring(6, 8)
-        eventDate = `${year}-${month}-${day}T00:00:00Z`
-      }
-    }
+    // Calculate the target date by adding the newDay (column index) to the week's start
+    const targetDate = new Date(weekStart)
+    targetDate.setDate(weekStart.getDate() + newDay)
 
-    // Parse the target date from the provided date string
-    const targetDateTime = new Date(date)
-    const year = targetDateTime.getUTCFullYear()
-    const month = String(targetDateTime.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(targetDateTime.getUTCDate()).padStart(2, '0')
+    // Format the date components
+    const year = targetDate.getFullYear()
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0')
+    const day = String(targetDate.getDate()).padStart(2, '0')
 
     // Format times with proper padding
     const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
@@ -52,8 +43,8 @@ serve(async (req) => {
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
-      isRecurring,
-      eventId
+      targetDate: targetDate.toISOString(),
+      newDay
     })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
