@@ -217,9 +217,6 @@ const CalendarView = () => {
                       }}
                     >
                       <div className="font-medium text-sm">{habit.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {habit.startTime} - {habit.endTime}
-                      </div>
                     </Card>
                   ))}
               </div>
