@@ -123,11 +123,12 @@ serve(async (req) => {
       )
     }
 
-    // Redirect back to the application
+    // Redirect back to the application using the preview URL
+    const appUrl = 'https://preview--life-sphere-habits.lovable.app/calendar'
     return new Response(null, {
       headers: {
         ...corsHeaders,
-        'Location': '/calendar',
+        'Location': appUrl,
       },
       status: 302
     })
