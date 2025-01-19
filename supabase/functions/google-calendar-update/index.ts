@@ -25,6 +25,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Get the user's calendar token
     const { data: tokenData, error: tokenError } = await supabase
       .from('calendar_tokens')
       .select('access_token, refresh_token, expires_at')
@@ -36,7 +37,7 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Parse the base date
+    // Parse the base date from the UTC string
     const baseDate = new Date(date);
     if (isNaN(baseDate.getTime())) {
       throw new Error('Invalid date format provided');
@@ -46,30 +47,14 @@ serve(async (req) => {
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
 
-    // Create Date objects with the correct date and time
-    const startDateTime = new Date(
-      baseDate.getFullYear(),
-      baseDate.getMonth(),
-      baseDate.getDate(),
-      startHours,
-      startMinutes
-    );
-
-    const endDateTime = new Date(
-      baseDate.getFullYear(),
-      baseDate.getMonth(),
-      baseDate.getDate(),
-      endHours,
-      endMinutes
-    );
-
-    // Format dates in RFC3339 format
-    const formatToRFC3339 = (date: Date) => {
-      return date.toLocaleString('sv', { timeZone }).replace(' ', 'T') + ':00';
+    // Format the date-time strings in RFC3339 format with the user's timezone
+    const formatDateTime = (hours: number, minutes: number) => {
+      const datePart = baseDate.toISOString().split('T')[0];
+      return `${datePart}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     };
 
-    const formattedStart = formatToRFC3339(startDateTime);
-    const formattedEnd = formatToRFC3339(endDateTime);
+    const formattedStart = formatDateTime(startHours, startMinutes);
+    const formattedEnd = formatDateTime(endHours, endMinutes);
 
     console.log('Formatted dates:', {
       startDateTime: formattedStart,
