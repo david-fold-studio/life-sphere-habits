@@ -11,7 +11,6 @@ const CalendarView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Check if user has connected Google Calendar
   const { data: calendarToken, isLoading } = useQuery({
     queryKey: ['calendar-token', user?.id],
     queryFn: async () => {
@@ -86,7 +85,6 @@ const CalendarView = () => {
     }
   };
 
-  // Sample scheduled habits with fixed times and their associated spheres
   const scheduledHabits = [
     { 
       id: "1", 
@@ -163,8 +161,6 @@ const CalendarView = () => {
     );
   }
 
-  const showConnectButton = !isLoading && !calendarToken;
-
   return (
     <div className="container mx-auto p-4 py-8">
       <header className="mb-8 flex items-center justify-between">
@@ -175,7 +171,7 @@ const CalendarView = () => {
           </p>
         </div>
         
-        {showConnectButton && (
+        {!calendarToken && (
           <Button 
             onClick={handleConnectCalendar}
             className="relative"
