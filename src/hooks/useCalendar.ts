@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { startOfWeek } from 'date-fns';
+import { startOfWeek, addDays, format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,13 +24,17 @@ export const useCalendar = (userId: string | undefined) => {
 
   const handleEventUpdate = async (id: string, startTime: string, endTime: string, newDay?: number, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
     try {
-      // Check if this is a Google Calendar event (they have a different ID format)
       const isGoogleEvent = !id.includes('-');
       
       if (isGoogleEvent) {
         console.log('Updating Google Calendar event:', { id, startTime, endTime, newDay });
         
-        // Get the user's timezone
+        // Calculate the target date based on the week start and new day
+        let targetDate = currentWeekStart;
+        if (typeof newDay === 'number') {
+          targetDate = addDays(currentWeekStart, newDay);
+        }
+        
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         const { error } = await supabase.functions.invoke('google-calendar-update', {
@@ -38,7 +42,7 @@ export const useCalendar = (userId: string | undefined) => {
             eventId: id,
             startTime,
             endTime,
-            date: currentWeekStart.toISOString(),
+            date: targetDate.toISOString(),
             user_id: userId,
             timeZone: userTimeZone,
             newDay
@@ -47,7 +51,6 @@ export const useCalendar = (userId: string | undefined) => {
 
         if (error) throw error;
         
-        // Refetch Google Calendar events to get the updated data
         refetchGoogleEvents();
 
         toast({
@@ -55,8 +58,6 @@ export const useCalendar = (userId: string | undefined) => {
           description: "The event has been updated in Google Calendar.",
         });
       } else {
-        // Handle regular scheduled habits
-        // Validate UUID format for database events
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
           throw new Error('Invalid UUID format');
         }

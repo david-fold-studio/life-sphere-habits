@@ -73,7 +73,6 @@ export const useEventHandlers = ({
       currentDeltaX.current = e.clientX - dragStartX.current;
       
       // Calculate day change based on horizontal movement
-      // Assuming each day column is roughly 200px wide
       const dayChange = Math.round(currentDeltaX.current / 200);
       const newDay = Math.min(Math.max(0, originalDay.current + dayChange), 6);
       
