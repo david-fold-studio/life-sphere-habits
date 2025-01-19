@@ -1,7 +1,56 @@
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { format, addHours, startOfDay, startOfWeek, addDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 const CalendarView = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Check if user has connected Google Calendar
+  const { data: calendarToken, isLoading } = useQuery({
+    queryKey: ['calendar-token', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('calendar_tokens')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const handleConnectCalendar = async () => {
+    try {
+      const response = await fetch('/functions/v1/google-calendar-auth/authorize');
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to start Google Calendar authorization",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error connecting to Google Calendar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to Google Calendar",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Sample scheduled habits with fixed times and their associated spheres
   const scheduledHabits = [
     { 
@@ -49,13 +98,11 @@ const CalendarView = () => {
   const today = new Date();
   const weekStart = startOfWeek(today);
   
-  // Generate time slots for 24 hours
   const timeSlots = Array.from({ length: 24 }, (_, i) => ({
     hour: i,
     label: format(addHours(startOfDay(today), i), "h:mm a"),
   }));
 
-  // Generate week days
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
     return {
@@ -65,28 +112,42 @@ const CalendarView = () => {
     };
   });
 
-  // Helper function to calculate event position and height
   const getEventStyle = (startTime: string) => {
     const [hours, minutes] = startTime.split(":").map(Number);
-    const top = (hours * 60 + minutes) * (100 / 1440); // Convert to percentage of day
+    const top = (hours * 60 + minutes) * (100 / 1440);
     return {
       top: `${top}%`,
     };
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4 py-8">
-      <header className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold">Weekly Schedule</h1>
-        <p className="text-muted-foreground">
-          Week of {format(weekStart, "MMMM d, yyyy")}
-        </p>
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Weekly Schedule</h1>
+          <p className="text-muted-foreground">
+            Week of {format(weekStart, "MMMM d, yyyy")}
+          </p>
+        </div>
+        
+        {!calendarToken && (
+          <Button onClick={handleConnectCalendar}>
+            Connect Google Calendar
+          </Button>
+        )}
       </header>
 
       <div className="flex">
-        {/* Time column */}
         <div className="w-20 flex-shrink-0">
-          <div className="h-16" /> {/* Empty space for day headers */}
+          <div className="h-16" />
           {timeSlots.map(({ hour, label }) => (
             <div key={hour} className="h-20 border-t text-sm text-muted-foreground pr-2 text-right">
               {label}
@@ -94,17 +155,14 @@ const CalendarView = () => {
           ))}
         </div>
 
-        {/* Days columns */}
         <div className="flex-grow flex">
           {weekDays.map(({ date, dayName, fullDate }, dayIndex) => (
             <div key={dayIndex} className="flex-1 relative border-l first:border-l-0">
-              {/* Day header */}
               <div className="h-16 border-b p-2 text-center sticky top-0 bg-background">
                 <div className="font-semibold">{dayName}</div>
                 <div className="text-sm text-muted-foreground">{fullDate}</div>
               </div>
 
-              {/* Time grid */}
               <div className="relative">
                 {timeSlots.map(({ hour }) => (
                   <div
@@ -113,7 +171,6 @@ const CalendarView = () => {
                   />
                 ))}
 
-                {/* Events */}
                 {scheduledHabits
                   .filter((habit) => habit.day === dayIndex)
                   .map((habit) => (
