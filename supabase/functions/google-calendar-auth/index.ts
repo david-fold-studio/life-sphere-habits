@@ -44,6 +44,9 @@ serve(async (req) => {
     // Use the exact redirect URI that's configured in Google Cloud Console
     const redirectUri = 'https://yrrnprfymzagkxcwycrk.supabase.co/functions/v1/google-calendar-callback'
     
+    // Log the exact redirect URI being used
+    console.log('Using redirect URI:', redirectUri);
+    
     const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
     googleAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID)
     googleAuthUrl.searchParams.append('redirect_uri', redirectUri)
@@ -54,7 +57,8 @@ serve(async (req) => {
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events'
+      'https://www.googleapis.com/auth/calendar.events',
+      'openid'
     ];
     
     googleAuthUrl.searchParams.append('scope', scopes.join(' '))
@@ -62,11 +66,9 @@ serve(async (req) => {
     googleAuthUrl.searchParams.append('state', user_id)
     googleAuthUrl.searchParams.append('prompt', 'consent')
     
-    // Add additional parameters for debugging
-    googleAuthUrl.searchParams.append('include_granted_scopes', 'true')
-
-    console.log('Generated auth URL:', googleAuthUrl.toString())
-    console.log('Requested scopes:', scopes)
+    // Log the complete authorization URL for debugging
+    console.log('Complete authorization URL:', googleAuthUrl.toString());
+    console.log('Requested scopes:', scopes);
 
     return new Response(
       JSON.stringify({ url: googleAuthUrl.toString() }),
