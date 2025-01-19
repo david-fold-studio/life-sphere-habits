@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { SphereTitleSection } from "./SphereTitleSection";
 import { GoalCard } from "./GoalCard";
 import { AddGoalForm } from "./AddGoalForm";
-import { v4 as uuidv4 } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 interface Habit {
   id: string;
