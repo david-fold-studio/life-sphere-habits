@@ -33,7 +33,12 @@ serve(async (req) => {
     googleAuthUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID)
     googleAuthUrl.searchParams.append('redirect_uri', redirectUri)
     googleAuthUrl.searchParams.append('response_type', 'code')
-    googleAuthUrl.searchParams.append('scope', 'https://www.googleapis.com/auth/calendar.readonly')
+    googleAuthUrl.searchParams.append('scope', [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events'
+    ].join(' '))
     googleAuthUrl.searchParams.append('access_type', 'offline')
     googleAuthUrl.searchParams.append('state', crypto.randomUUID())
     googleAuthUrl.searchParams.append('prompt', 'consent')
