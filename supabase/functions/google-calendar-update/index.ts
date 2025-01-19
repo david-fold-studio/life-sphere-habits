@@ -15,31 +15,44 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
-    // Parse the date from the interface
-    const [year, month, day] = date.split('T')[0].split('-').map(Number)
-    
-    // Create date objects for start and end times using the interface date
-    const startDateTime = new Date(Date.UTC(year, month - 1, day))
-    const endDateTime = new Date(Date.UTC(year, month - 1, day))
-    
-    // Set the hours and minutes from the interface times
-    const [startHour, startMinute] = startTime.split(':').map(Number)
-    const [endHour, endMinute] = endTime.split(':').map(Number)
-    
-    startDateTime.setUTCHours(startHour, startMinute, 0)
-    endDateTime.setUTCHours(endHour, endMinute, 0)
+    // Check if this is a recurring event
+    const isRecurring = eventId.includes('_R')
 
-    // Format dates in RFC3339 format
-    const startDateTimeString = startDateTime.toISOString()
-    const endDateTimeString = endDateTime.toISOString()
+    // For recurring events, we need to use the original event date
+    let eventDate = date
+    if (isRecurring) {
+      // Extract the date from the recurring event ID (format: originalEventId_R20250107T233000)
+      const dateFromId = eventId.split('_R')[1]
+      if (dateFromId) {
+        const year = dateFromId.substring(0, 4)
+        const month = dateFromId.substring(4, 6)
+        const day = dateFromId.substring(6, 8)
+        eventDate = `${year}-${month}-${day}T00:00:00Z`
+      }
+    }
+
+    // Parse the event date
+    const eventDateTime = new Date(eventDate)
+    const year = eventDateTime.getUTCFullYear()
+    const month = String(eventDateTime.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(eventDateTime.getUTCDate()).padStart(2, '0')
+
+    // Format times with proper padding
+    const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
+    const [endHour, endMinute] = endTime.split(':').map(n => String(n).padStart(2, '0'))
+
+    // Format the datetime strings in RFC3339 format
+    const formattedTimeZone = timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''
+    const startDateTime = `${year}-${month}-${day}T${startHour}:${startMinute}:00${formattedTimeZone}`
+    const endDateTime = `${year}-${month}-${day}T${endHour}:${endMinute}:00${formattedTimeZone}`
 
     console.log('Formatted dates for Google Calendar:', {
-      startDateTime: startDateTimeString,
-      endDateTime: endDateTimeString,
+      startDateTime,
+      endDateTime,
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
-      parsedComponents: { year, month, day, startHour, startMinute, endHour, endMinute },
+      isRecurring,
       eventId
     })
 
@@ -48,6 +61,7 @@ serve(async (req) => {
     
     console.log('Fetching token for user:', user_id)
     
+    // First get the profile ID which is linked to the calendar tokens
     const profileResponse = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${user_id}&select=id`,
       {
@@ -72,6 +86,7 @@ serve(async (req) => {
 
     const profileId = profileData[0].id
     
+    // Now get the calendar token using the profile ID
     const tokenResponse = await fetch(
       `${supabaseUrl}/rest/v1/calendar_tokens?select=access_token&user_id=eq.${profileId}`,
       {
@@ -108,11 +123,11 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           start: {
-            dateTime: startDateTimeString,
+            dateTime: startDateTime,
             timeZone
           },
           end: {
-            dateTime: endDateTimeString,
+            dateTime: endDateTime,
             timeZone
           },
         }),
@@ -126,8 +141,8 @@ serve(async (req) => {
         statusText: googleResponse.statusText,
         error: errorText,
         requestBody: {
-          start: { dateTime: startDateTimeString, timeZone },
-          end: { dateTime: endDateTimeString, timeZone }
+          start: { dateTime: startDateTime, timeZone },
+          end: { dateTime: endDateTime, timeZone }
         }
       })
       throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
