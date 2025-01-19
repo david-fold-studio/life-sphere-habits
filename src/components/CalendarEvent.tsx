@@ -106,6 +106,11 @@ export function CalendarEvent({
     if (sphere === 'google-calendar' && !isOwner) return;
 
     try {
+      // Validate UUID format
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+        throw new Error('Invalid UUID format');
+      }
+
       const { error } = await supabase
         .from('scheduled_habits')
         .update({ 

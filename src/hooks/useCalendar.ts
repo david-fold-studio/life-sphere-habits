@@ -24,6 +24,11 @@ export const useCalendar = (userId: string | undefined) => {
 
   const handleEventUpdate = async (id: string, startTime: string, endTime: string, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
     try {
+      // Validate UUID format
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+        throw new Error('Invalid UUID format');
+      }
+
       const { error } = await supabase
         .from('scheduled_habits')
         .update({ 
