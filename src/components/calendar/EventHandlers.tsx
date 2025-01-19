@@ -25,7 +25,7 @@ export const useEventHandlers = ({
   const originalEndTime = useRef<string>(endTime);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
-    console.log('Mouse down event triggered:', { id, type, isOwner });
+    console.log('Mouse down event triggered:', { id, type, isOwner, sphere });
     
     if (!isOwner) {
       console.log('Not owner, ignoring mouse down');
@@ -46,6 +46,9 @@ export const useEventHandlers = ({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+    
+    // Prevent text selection during drag
+    e.preventDefault();
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -58,7 +61,7 @@ export const useEventHandlers = ({
     console.log('Mouse move delta:', deltaY);
     
     if (isResizing) {
-      console.log('Resizing event:', { id, isResizing });
+      console.log('Resizing event:', { id, isResizing, sphere });
       const { newStartTime, newEndTime } = calculateResizeTime(
         originalStartTime.current,
         originalEndTime.current,
@@ -69,7 +72,7 @@ export const useEventHandlers = ({
       console.log('New times after resize:', { newStartTime, newEndTime });
       onEventUpdate(id, newStartTime, newEndTime);
     } else if (isDragging) {
-      console.log('Dragging event:', id);
+      console.log('Dragging event:', { id, sphere });
       const { newStartTime, newEndTime } = calculateNewTimes(
         originalStartTime.current,
         originalEndTime.current,

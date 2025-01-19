@@ -47,8 +47,11 @@ export function CalendarEvent({
     sphere,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
-      console.log('Event update triggered:', { id, newStartTime, newEndTime });
-      if (isRecurring || hasInvitees) {
+      console.log('Event update triggered:', { id, newStartTime, newEndTime, sphere });
+      if (sphere === 'google-calendar') {
+        console.log('Updating Google Calendar event');
+        onEventUpdate?.(id, newStartTime, newEndTime);
+      } else if (isRecurring || hasInvitees) {
         console.log('Opening update dialog for recurring/invited event');
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
@@ -78,7 +81,7 @@ export function CalendarEvent({
           cursor
         }}
         onMouseDown={(e) => {
-          console.log('Card mouse down event:', { id, isOwner });
+          console.log('Card mouse down event:', { id, isOwner, sphere });
           if (!isOwner) return;
           handleMouseDown(e);
         }}
