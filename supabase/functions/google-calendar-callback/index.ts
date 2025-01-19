@@ -16,6 +16,7 @@ serve(async (req) => {
     const url = new URL(req.url)
     const code = url.searchParams.get('code')
     const error = url.searchParams.get('error')
+    const state = url.searchParams.get('state')
 
     if (error) {
       console.error('Error from Google:', error)
@@ -58,6 +59,7 @@ serve(async (req) => {
     })
 
     const tokens = await tokenResponse.json()
+    console.log('Token response:', JSON.stringify(tokens, null, 2))
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', tokens)
@@ -70,9 +72,15 @@ serve(async (req) => {
       )
     }
 
-    // Get user information from the ID token
-    const jwt = tokens.id_token.split('.')[1]
-    const userInfo = JSON.parse(atob(jwt))
+    // Get user information from the access token
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${tokens.access_token}`
+      }
+    });
+
+    const userInfo = await userInfoResponse.json();
+    console.log('User info:', JSON.stringify(userInfo, null, 2));
     
     // Create Supabase client
     const supabaseClient = createClient(
@@ -84,7 +92,7 @@ serve(async (req) => {
     const { error: dbError } = await supabaseClient
       .from('calendar_tokens')
       .upsert({
-        user_id: userInfo.sub,
+        user_id: userInfo.id, // Use the Google user ID
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_type: tokens.token_type,
@@ -108,7 +116,7 @@ serve(async (req) => {
     return new Response(null, {
       headers: {
         ...corsHeaders,
-        'Location': '/',
+        'Location': '/calendar',
       },
       status: 302
     })
