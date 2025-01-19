@@ -11,7 +11,6 @@ export const calculateEventStyle = (startTime: string, endTime: string, isDraggi
   return {
     top: `${top}px`,
     height: `${height}px`,
-    cursor: isDragging ? 'grabbing' : 'grab'
   };
 };
 
@@ -35,6 +34,35 @@ export const calculateNewTimes = (
     const diff = newEndMinutes - (24 * 60 - 1);
     newEndMinutes = 24 * 60 - 1;
     newStartMinutes = Math.max(0, newStartMinutes - diff);
+  }
+  
+  const newStartTime = `${String(Math.floor(newStartMinutes / 60)).padStart(2, '0')}:${String(newStartMinutes % 60).padStart(2, '0')}`;
+  const newEndTime = `${String(Math.floor(newEndMinutes / 60)).padStart(2, '0')}:${String(newEndMinutes % 60).padStart(2, '0')}`;
+  
+  return { newStartTime, newEndTime };
+};
+
+export const calculateResizeTime = (
+  originalStartTime: string,
+  originalEndTime: string,
+  deltaY: number,
+  resizeType: 'top' | 'bottom'
+) => {
+  const deltaMinutes = Math.round((deltaY / 48) * 60);
+  
+  const [startHours, startMinutes] = originalStartTime.split(":").map(Number);
+  const [endHours, endMinutes] = originalEndTime.split(":").map(Number);
+  let newStartMinutes = startHours * 60 + startMinutes;
+  let newEndMinutes = endHours * 60 + endMinutes;
+  
+  if (resizeType === 'top') {
+    newStartMinutes += deltaMinutes;
+    if (newStartMinutes < 0) newStartMinutes = 0;
+    if (newStartMinutes >= newEndMinutes - 15) newStartMinutes = newEndMinutes - 15;
+  } else {
+    newEndMinutes += deltaMinutes;
+    if (newEndMinutes >= 24 * 60) newEndMinutes = 24 * 60 - 1;
+    if (newEndMinutes <= newStartMinutes + 15) newEndMinutes = newStartMinutes + 15;
   }
   
   const newStartTime = `${String(Math.floor(newStartMinutes / 60)).padStart(2, '0')}:${String(newStartMinutes % 60).padStart(2, '0')}`;
