@@ -1,12 +1,13 @@
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, addDays } from "date-fns";
+import { startOfWeek } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarWeekHeader } from "@/components/CalendarWeekHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
+import { addDays } from "date-fns";
 
 interface ScheduledHabit {
   id: string;
@@ -17,36 +18,39 @@ interface ScheduledHabit {
   sphere: string;
 }
 
-const fetchScheduledHabits = async (userId: string) => {
+const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> => {
   const { data, error } = await supabase
     .from("scheduled_habits")
     .select("*")
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
-  return data;
+  return data || [];
 };
 
 export default function CalendarView() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const weekStart = startOfWeek(new Date());
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(startOfWeek(new Date()), i);
+    const date = addDays(weekStart, i);
     return { date, dayIndex: i };
   });
 
-  const { data: scheduledHabits = [], isLoading, error } = useQuery(
-    ["scheduledHabits", user?.id],
-    () => fetchScheduledHabits(user.id),
-    { enabled: !!user }
-  );
+  const { data: scheduledHabits = [], isLoading, error } = useQuery({
+    queryKey: ["scheduledHabits", user?.id],
+    queryFn: () => fetchScheduledHabits(user?.id || ""),
+    enabled: !!user
+  });
 
   const handleGoogleCalendarConnect = async () => {
     // Handle Google Calendar connection logic
+    toast({
+      title: "Coming soon",
+      description: "Google Calendar integration will be available soon.",
+    });
   };
-
-  const isConnected = false; // Replace with actual connection state
 
   if (isLoading) {
     return (
@@ -65,10 +69,10 @@ export default function CalendarView() {
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col p-8">
       <CalendarHeader
-        onGoogleCalendarConnect={handleGoogleCalendarConnect}
-        isConnected={isConnected}
+        weekStart={weekStart}
+        onConnectCalendar={handleGoogleCalendarConnect}
       />
 
       <div className="flex-1 overflow-hidden">
