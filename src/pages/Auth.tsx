@@ -111,8 +111,7 @@ const Auth = () => {
             }}
             providers={["google"]}
             view="sign_in"
-            showLinks={false}
-            onlyThirdPartyProviders={true}
+            showLinks={true}
             redirectTo={window.location.origin}
           />
         </div>
