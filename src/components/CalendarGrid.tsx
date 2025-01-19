@@ -17,21 +17,23 @@ interface CalendarGridProps {
     dayIndex: number;
   }>;
   scheduledHabits: ScheduledHabit[];
+  onEventUpdate: (id: string, startTime: string, endTime: string) => void;
+  onEventDelete: (id: string) => void;
 }
 
-export function CalendarGrid({ weekDays, scheduledHabits }: CalendarGridProps) {
+export function CalendarGrid({ 
+  weekDays, 
+  scheduledHabits,
+  onEventUpdate,
+  onEventDelete
+}: CalendarGridProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      // Get current time in minutes since midnight
       const now = new Date();
       const minutes = now.getHours() * 60 + now.getMinutes();
-      
-      // Calculate scroll position (48px per hour = 0.8px per minute)
       const scrollPosition = (minutes * 48) / 60;
-      
-      // Center the current time in the viewport
       const containerHeight = scrollContainerRef.current.clientHeight;
       scrollContainerRef.current.scrollTop = scrollPosition - (containerHeight / 2);
     }
@@ -44,13 +46,15 @@ export function CalendarGrid({ weekDays, scheduledHabits }: CalendarGridProps) {
       style={{ height: 'calc(100vh - 12rem)' }}
     >
       <CalendarTimeSlots />
-      <div className="flex flex-1 relative min-h-[1152px]"> {/* 24 hours * 48px = 1152px */}
+      <div className="flex flex-1 relative min-h-[1152px]">
         {weekDays.map(({ date, dayIndex }) => (
           <CalendarDayColumn
             key={dayIndex}
             date={date}
             dayIndex={dayIndex}
             scheduledHabits={scheduledHabits}
+            onEventUpdate={onEventUpdate}
+            onEventDelete={onEventDelete}
           />
         ))}
       </div>

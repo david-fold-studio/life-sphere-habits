@@ -13,14 +13,20 @@ interface CalendarDayColumnProps {
   date: Date;
   dayIndex: number;
   scheduledHabits: ScheduledHabit[];
+  onEventUpdate: (id: string, startTime: string, endTime: string) => void;
+  onEventDelete: (id: string) => void;
 }
 
-export function CalendarDayColumn({ dayIndex, scheduledHabits }: CalendarDayColumnProps) {
+export function CalendarDayColumn({ 
+  dayIndex, 
+  scheduledHabits,
+  onEventUpdate,
+  onEventDelete
+}: CalendarDayColumnProps) {
   const timeSlots = Array.from({ length: 24 }, (_, hour) => hour);
   
   return (
     <div className="flex-1 relative border-l first:border-l-0 min-h-full">
-      {/* Time grid in the background */}
       <div className="absolute inset-0 pointer-events-none">
         {timeSlots.map((hour) => (
           <div
@@ -30,7 +36,6 @@ export function CalendarDayColumn({ dayIndex, scheduledHabits }: CalendarDayColu
         ))}
       </div>
 
-      {/* Habits layer on top */}
       <div className="absolute inset-0 z-10">
         {scheduledHabits
           .filter((habit) => habit.day === dayIndex)
@@ -42,6 +47,8 @@ export function CalendarDayColumn({ dayIndex, scheduledHabits }: CalendarDayColu
               startTime={habit.startTime}
               endTime={habit.endTime}
               sphere={habit.sphere}
+              onEventUpdate={onEventUpdate}
+              onEventDelete={onEventDelete}
             />
           ))}
       </div>
