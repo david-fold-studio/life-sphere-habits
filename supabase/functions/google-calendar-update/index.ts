@@ -33,26 +33,36 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
+    console.log('Fetching token for user:', user_id)
+    
     // Get the user's calendar token using the user_id parameter
-    const { data: tokenData, error: tokenError } = await fetch(
-      `${supabaseUrl}/rest/v1/calendar_tokens?user_id=eq.${user_id}`,
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/calendar_tokens?select=access_token&user_id=eq.${user_id}`,
       {
         headers: {
           Authorization: `Bearer ${supabaseServiceKey}`,
           apikey: supabaseServiceKey,
         },
       }
-    ).then(res => res.json())
+    );
 
-    console.log('Token data:', tokenData)
-
-    if (tokenError || !tokenData?.[0]?.access_token) {
-      throw new Error('No valid token found')
+    if (!response.ok) {
+      console.error('Failed to fetch token:', await response.text());
+      throw new Error('Failed to fetch token');
     }
 
-    const accessToken = tokenData[0].access_token
+    const tokenData = await response.json();
+    console.log('Token data response:', tokenData);
 
-    const response = await fetch(
+    if (!tokenData || !tokenData[0] || !tokenData[0].access_token) {
+      console.error('No token found for user:', user_id);
+      throw new Error('No valid token found');
+    }
+
+    const accessToken = tokenData[0].access_token;
+    console.log('Successfully retrieved access token');
+
+    const googleResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
       {
         method: 'PATCH',
@@ -73,17 +83,17 @@ serve(async (req) => {
       }
     )
 
-    if (!response.ok) {
-      const errorText = await response.text()
+    if (!googleResponse.ok) {
+      const errorText = await googleResponse.text()
       console.error('Google Calendar API error:', {
-        status: response.status,
-        statusText: response.statusText,
+        status: googleResponse.status,
+        statusText: googleResponse.statusText,
         error: errorText
       })
-      throw new Error(`Failed to update calendar event: ${response.status} ${response.statusText} - ${errorText}`)
+      throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
     }
 
-    const responseData = await response.json()
+    const responseData = await googleResponse.json()
     console.log('Successfully updated event:', responseData)
 
     return new Response(
