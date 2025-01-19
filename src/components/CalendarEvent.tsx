@@ -1,11 +1,10 @@
 import { Card } from "@/components/ui/card";
-import { useState, useRef } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { EventDialog } from "./calendar/EventDialog";
 import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
-import { calculateEventStyle, calculateNewTimes, calculateResizeTime } from "./calendar/EventDragLogic";
-import { GripHorizontal } from "lucide-react";
+import { calculateEventStyle } from "./calendar/EventDragLogic";
+import { useEventHandlers } from "./calendar/EventHandlers";
+import { EventResizeHandles } from "./calendar/EventResizeHandles";
 
 interface CalendarEventProps {
   id: string;
@@ -32,109 +31,27 @@ export function CalendarEvent({
   onEventUpdate,
   onEventDelete 
 }: CalendarEventProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState<'top' | 'bottom' | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
-  const dragStartY = useRef<number>(0);
-  const originalStartTime = useRef<string>(startTime);
-  const originalEndTime = useRef<string>(endTime);
-  const { toast } = useToast();
 
-  const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
-    if (sphere === 'google-calendar' && !isOwner) return;
-    
-    if (type) {
-      setIsResizing(type);
-    } else {
-      setIsDragging(true);
-    }
-    
-    dragStartY.current = e.clientY;
-    originalStartTime.current = startTime;
-    originalEndTime.current = endTime;
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging && !isResizing) return;
-    
-    const deltaY = e.clientY - dragStartY.current;
-    
-    if (isResizing) {
-      const { newStartTime, newEndTime } = calculateResizeTime(
-        originalStartTime.current,
-        originalEndTime.current,
-        deltaY,
-        isResizing
-      );
-      
-      if (onEventUpdate) {
-        onEventUpdate(id, newStartTime, newEndTime);
-      }
-    } else if (isDragging) {
-      const { newStartTime, newEndTime } = calculateNewTimes(
-        originalStartTime.current,
-        originalEndTime.current,
-        deltaY
-      );
-      
-      if (onEventUpdate) {
+  const {
+    isDragging,
+    handleMouseDown,
+    handleMouseUp
+  } = useEventHandlers({
+    id,
+    startTime,
+    endTime,
+    sphere,
+    isOwner,
+    onEventUpdate: (id, newStartTime, newEndTime) => {
+      if (isRecurring || hasInvitees) {
+        setUpdateDialogOpen(true);
+      } else if (onEventUpdate) {
         onEventUpdate(id, newStartTime, newEndTime);
       }
     }
-  };
-
-  const handleMouseUp = async () => {
-    if (!isDragging && !isResizing) return;
-    
-    if (isRecurring || hasInvitees) {
-      setUpdateDialogOpen(true);
-    } else {
-      await updateEvent();
-    }
-    
-    setIsDragging(false);
-    setIsResizing(null);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-
-  const updateEvent = async (updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
-    if (sphere === 'google-calendar' && !isOwner) return;
-
-    try {
-      // Validate UUID format
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
-        throw new Error('Invalid UUID format');
-      }
-
-      const { error } = await supabase
-        .from('scheduled_habits')
-        .update({ 
-          starttime: startTime, 
-          endtime: endTime 
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Event updated",
-        description: "The event time has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Error updating event:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update the event time.",
-        variant: "destructive",
-      });
-    }
-    setUpdateDialogOpen(false);
-  };
+  });
 
   const [startHours, startMinutes] = startTime.split(":").map(Number);
   const [endHours, endMinutes] = endTime.split(":").map(Number);
@@ -158,22 +75,7 @@ export function CalendarEvent({
         onMouseDown={(e) => !isOwner ? null : handleMouseDown(e)}
         onClick={() => setDialogOpen(true)}
       >
-        {isOwner && (
-          <>
-            <div
-              className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/10"
-              onMouseDown={(e) => handleMouseDown(e, 'top')}
-            >
-              <GripHorizontal className="w-4 h-4 mx-auto" />
-            </div>
-            <div
-              className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/10"
-              onMouseDown={(e) => handleMouseDown(e, 'bottom')}
-            >
-              <GripHorizontal className="w-4 h-4 mx-auto" />
-            </div>
-          </>
-        )}
+        {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
         <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
           {name}
         </div>
@@ -197,7 +99,12 @@ export function CalendarEvent({
           onOpenChange={setUpdateDialogOpen}
           isRecurring={isRecurring}
           hasInvitees={hasInvitees}
-          onUpdate={updateEvent}
+          onUpdate={(updateType, notifyInvitees) => {
+            if (onEventUpdate) {
+              onEventUpdate(id, startTime, endTime, updateType, notifyInvitees);
+            }
+            setUpdateDialogOpen(false);
+          }}
         />
       )}
     </>
