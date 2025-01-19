@@ -25,7 +25,8 @@ export const useEventHandlers = ({
   const originalEndTime = useRef<string>(endTime);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
-    if (sphere === 'google-calendar' && !isOwner) return;
+    // Remove the sphere check to allow Google Calendar events to be moved
+    if (!isOwner) return;
     
     if (type) {
       setIsResizing(type);
