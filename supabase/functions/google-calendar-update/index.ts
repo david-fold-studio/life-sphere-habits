@@ -83,7 +83,6 @@ serve(async (req) => {
 
     while (retryCount < maxRetries) {
       try {
-        // Use the eventId directly - it already contains the instance ID for recurring events
         const endpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
         
         console.log('Making request to endpoint:', endpoint);
@@ -98,11 +97,11 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: new Date(date).toISOString().split('T')[0] + `T${startTime}:00`,
+                dateTime: `${date.split('T')[0]}T${startTime}:00`,
                 timeZone
               },
               end: { 
-                dateTime: new Date(date).toISOString().split('T')[0] + `T${endTime}:00`,
+                dateTime: `${date.split('T')[0]}T${endTime}:00`,
                 timeZone
               },
             }),
