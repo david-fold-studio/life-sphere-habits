@@ -28,13 +28,15 @@ export const useCalendar = (userId: string | undefined) => {
       const isGoogleEvent = !id.includes('-');
       
       if (isGoogleEvent) {
+        console.log('Updating Google Calendar event:', { id, startTime, endTime });
+        
         const { error } = await supabase.functions.invoke('google-calendar-update', {
           body: { 
             eventId: id,
             startTime,
             endTime,
-            updateType,
-            notifyInvitees
+            date: currentWeekStart.toISOString(),
+            user_id: userId
           }
         });
 
@@ -42,6 +44,11 @@ export const useCalendar = (userId: string | undefined) => {
         
         // Refetch Google Calendar events to get the updated data
         refetchGoogleEvents();
+
+        toast({
+          title: "Event updated",
+          description: "The event has been updated in Google Calendar.",
+        });
       } else {
         // Handle regular scheduled habits
         // Validate UUID format for database events
@@ -59,12 +66,12 @@ export const useCalendar = (userId: string | undefined) => {
 
         if (error) throw error;
         refetchHabits();
-      }
 
-      toast({
-        title: "Event updated",
-        description: "The event time has been updated successfully.",
-      });
+        toast({
+          title: "Event updated",
+          description: "The event time has been updated successfully.",
+        });
+      }
     } catch (error) {
       console.error('Error updating event:', error);
       toast({

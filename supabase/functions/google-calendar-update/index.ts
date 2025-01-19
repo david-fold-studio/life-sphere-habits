@@ -1,49 +1,53 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-    )
+    const { eventId, startTime, endTime, date, user_id } = await req.json();
+    
+    if (!eventId || !startTime || !endTime || !date || !user_id) {
+      throw new Error('Missing required parameters');
+    }
 
-    const { eventId, startTime, endTime, updateType, notifyInvitees } = await req.json()
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
-
-    // Get user's Google Calendar token
-    const { data: { user } } = await supabase.auth.getUser(token)
-    if (!user) throw new Error('Not authenticated')
+    // Get the user's token
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { data: tokenData, error: tokenError } = await supabase
       .from('calendar_tokens')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
+      .select('access_token')
+      .eq('user_id', user_id)
+      .single();
 
     if (tokenError || !tokenData) {
-      throw new Error('No calendar token found')
+      throw new Error('No valid token found');
     }
 
     // Convert time strings to RFC3339 format
-    const [hours, minutes] = startTime.split(':')
-    const [endHours, endMinutes] = endTime.split(':')
-    const today = new Date()
-    const startDate = new Date(today)
-    const endDate = new Date(today)
+    const [hours, minutes] = startTime.split(':');
+    const [endHours, endMinutes] = endTime.split(':');
     
-    startDate.setHours(parseInt(hours), parseInt(minutes), 0)
-    endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0)
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    
+    startDate.setHours(parseInt(hours), parseInt(minutes), 0);
+    endDate.setHours(parseInt(endHours), parseInt(endMinutes), 0);
+
+    console.log('Updating event:', {
+      eventId,
+      startDateTime: startDate.toISOString(),
+      endDateTime: endDate.toISOString()
+    });
 
     // Update the event in Google Calendar
     const response = await fetch(
@@ -59,26 +63,29 @@ serve(async (req) => {
           end: { dateTime: endDate.toISOString() },
         }),
       }
-    )
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to update Google Calendar event')
+      const errorData = await response.json();
+      console.error('Google Calendar API error:', errorData);
+      throw new Error('Failed to update calendar event');
     }
 
     return new Response(
       JSON.stringify({ success: true }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    )
+    );
   } catch (error) {
+    console.error('Error updating event:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       }
-    )
+    );
   }
-})
+});
