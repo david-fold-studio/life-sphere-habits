@@ -23,11 +23,11 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
     // Calculate height (48px per hour = 0.8px per minute)
     const height = durationInMinutes * (48 / 60);
     
-    // Calculate top position (percentage of 24 hours)
-    const top = (startInMinutes / (24 * 60)) * 100;
+    // Calculate top position (48px per hour)
+    const top = startInMinutes * (48 / 60);
 
     return {
-      top: `${top}%`,
+      top: `${top}px`,
       height: `${height}px`,
     };
   };
@@ -41,7 +41,7 @@ export function CalendarEvent({ id, name, startTime, endTime, sphere }: Calendar
   return (
     <Card
       key={id}
-      className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden`}
+      className={`absolute left-0 right-0 mx-1 p-1 overflow-hidden z-20`}
       style={{
         ...getEventStyle(startTime, endTime),
         backgroundColor: `var(--sphere-${sphere})`,

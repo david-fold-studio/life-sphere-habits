@@ -44,7 +44,7 @@ export function CalendarGrid({ weekDays, scheduledHabits }: CalendarGridProps) {
       style={{ height: 'calc(100vh - 12rem)' }}
     >
       <CalendarTimeSlots />
-      <div className="flex flex-1 relative">
+      <div className="flex flex-1 relative min-h-[1152px]"> {/* 24 hours * 48px = 1152px */}
         {weekDays.map(({ date, dayIndex }) => (
           <CalendarDayColumn
             key={dayIndex}
