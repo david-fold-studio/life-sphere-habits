@@ -73,10 +73,32 @@ export default function CalendarView() {
   console.log('Current scheduled habits:', scheduledHabits);
 
   const handleGoogleCalendarConnect = async () => {
-    toast({
-      title: "Coming soon",
-      description: "Google Calendar integration will be available soon.",
-    });
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to connect your Google Calendar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-auth', {
+        body: { user_id: user.id }
+      });
+
+      if (error) throw error;
+
+      // Redirect to Google's OAuth consent screen
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error connecting to Google Calendar:', error);
+      toast({
+        title: "Connection failed",
+        description: "Failed to connect to Google Calendar. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleWeekChange = (newDate: Date) => {
