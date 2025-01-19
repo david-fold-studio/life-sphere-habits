@@ -42,13 +42,6 @@ serve(async (req) => {
     const startDateTime = `${datePart}T${startTime}:00`;
     const endDateTime = `${datePart}T${endTime}:00`;
 
-    console.log('Using formatted dates:', {
-      startDateTime,
-      endDateTime,
-      timeZone,
-      eventId
-    });
-
     // Check if token is expired and refresh if needed
     const now = new Date();
     const tokenExpiry = tokenData.expires_at ? new Date(tokenData.expires_at) : null;
