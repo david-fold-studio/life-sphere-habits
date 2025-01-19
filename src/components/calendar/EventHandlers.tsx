@@ -24,6 +24,8 @@ export const useEventHandlers = ({
   const originalStartTime = useRef<string>(startTime);
   const originalEndTime = useRef<string>(endTime);
   const mouseMoveHandler = useRef<((e: MouseEvent) => void) | null>(null);
+  const isDraggingRef = useRef(false);
+  const isResizingRef = useRef<'top' | 'bottom' | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent, type?: 'top' | 'bottom') => {
     console.log('🔵 Mouse down event triggered:', { 
@@ -39,21 +41,21 @@ export const useEventHandlers = ({
       return;
     }
 
-    // Always prevent default to stop text selection
     e.preventDefault();
     
-    // If this is a resize operation (type is provided)
     if (type) {
       console.log('🔄 Starting resize operation:', type);
       e.stopPropagation();
       setIsResizing(type);
+      isResizingRef.current = type;
       setIsDragging(false);
+      isDraggingRef.current = false;
       dragStartY.current = e.clientY;
     } 
-    // If this is a drag operation (no type provided and not already resizing)
-    else if (!isResizing) {
+    else if (!isResizingRef.current) {
       console.log('✋ Starting drag operation');
       setIsDragging(true);
+      isDraggingRef.current = true;
       dragStartY.current = e.clientY;
     }
     
@@ -63,27 +65,30 @@ export const useEventHandlers = ({
     console.log('📌 Initial position and times:', {
       dragStartY: dragStartY.current,
       originalStartTime: originalStartTime.current,
-      originalEndTime: originalEndTime.current
+      originalEndTime: originalEndTime.current,
+      isDragging: isDraggingRef.current,
+      isResizing: isResizingRef.current
     });
 
-    // Create mousemove handler
     const moveHandler = (e: MouseEvent) => {
       const deltaY = e.clientY - dragStartY.current;
-      console.log('Mouse move:', { deltaY, isDragging, isResizing });
+      console.log('Mouse move:', { 
+        deltaY, 
+        isDragging: isDraggingRef.current, 
+        isResizing: isResizingRef.current 
+      });
       
-      // Handle resize operation
-      if (isResizing) {
-        console.log('🔄 Resizing event:', { id, isResizing, deltaY });
+      if (isResizingRef.current) {
+        console.log('🔄 Resizing event:', { id, isResizing: isResizingRef.current, deltaY });
         const { newStartTime, newEndTime } = calculateResizeTime(
           originalStartTime.current,
           originalEndTime.current,
           deltaY,
-          isResizing
+          isResizingRef.current
         );
         onEventUpdate(id, newStartTime, newEndTime);
       } 
-      // Handle drag operation
-      else if (isDragging) {
+      else if (isDraggingRef.current) {
         console.log('🚀 Dragging event:', { id, deltaY });
         const { newStartTime, newEndTime } = calculateNewTimes(
           originalStartTime.current,
@@ -94,7 +99,6 @@ export const useEventHandlers = ({
       }
     };
 
-    // Store the handler reference and add listeners
     mouseMoveHandler.current = moveHandler;
     document.addEventListener('mousemove', moveHandler);
     document.addEventListener('mouseup', handleMouseUp);
@@ -102,18 +106,18 @@ export const useEventHandlers = ({
 
   const handleMouseUp = () => {
     console.log('👆 Mouse up event - ending drag/resize', {
-      wasDragging: isDragging,
-      wasResizing: isResizing
+      wasDragging: isDraggingRef.current,
+      wasResizing: isResizingRef.current
     });
     
-    // Remove event listeners
     if (mouseMoveHandler.current) {
       document.removeEventListener('mousemove', mouseMoveHandler.current);
       mouseMoveHandler.current = null;
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
-    // Reset states after logging
+    isDraggingRef.current = false;
+    isResizingRef.current = null;
     setIsDragging(false);
     setIsResizing(null);
   };
