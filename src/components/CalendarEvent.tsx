@@ -185,7 +185,7 @@ export function CalendarEvent({
         onMouseDown={handleMouseDown}
         onClick={() => setDialogOpen(true)}
       >
-        <div className={`text-[7.5px] leading-[0.75] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
+        <div className={`text-[10px] leading-[0.75] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
           {name}
         </div>
       </Card>
