@@ -16,7 +16,7 @@ export const useCalendar = (userId: string | undefined) => {
     enabled: !!userId
   });
 
-  const { data: googleEvents = [], isLoading: eventsLoading } = useQuery({
+  const { data: googleEvents = [], isLoading: eventsLoading, refetch: refetchGoogleEvents } = useQuery({
     queryKey: ["googleCalendarEvents", userId, currentWeekStart],
     queryFn: () => fetchGoogleCalendarEvents(userId || "", currentWeekStart),
     enabled: !!userId
@@ -24,22 +24,42 @@ export const useCalendar = (userId: string | undefined) => {
 
   const handleEventUpdate = async (id: string, startTime: string, endTime: string, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
     try {
-      // Validate UUID format
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
-        throw new Error('Invalid UUID format');
+      // Check if this is a Google Calendar event (they have a different ID format)
+      const isGoogleEvent = !id.includes('-');
+      
+      if (isGoogleEvent) {
+        const { error } = await supabase.functions.invoke('google-calendar-update', {
+          body: { 
+            eventId: id,
+            startTime,
+            endTime,
+            updateType,
+            notifyInvitees
+          }
+        });
+
+        if (error) throw error;
+        
+        // Refetch Google Calendar events to get the updated data
+        refetchGoogleEvents();
+      } else {
+        // Handle regular scheduled habits
+        // Validate UUID format for database events
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+          throw new Error('Invalid UUID format');
+        }
+
+        const { error } = await supabase
+          .from('scheduled_habits')
+          .update({ 
+            starttime: startTime, 
+            endtime: endTime 
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+        refetchHabits();
       }
-
-      const { error } = await supabase
-        .from('scheduled_habits')
-        .update({ 
-          starttime: startTime, 
-          endtime: endTime 
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      refetchHabits();
 
       toast({
         title: "Event updated",
