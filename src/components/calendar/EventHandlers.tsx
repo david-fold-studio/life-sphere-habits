@@ -45,21 +45,16 @@ export const useEventHandlers = ({
     // If this is a resize operation (type is provided)
     if (type) {
       console.log('🔄 Starting resize operation:', type);
-      // Stop event from reaching the card's onClick handler
       e.stopPropagation();
       setIsResizing(type);
-      // Important: We're resizing, so make sure we're not dragging
       setIsDragging(false);
       dragStartY.current = e.clientY;
     } 
     // If this is a drag operation (no type provided and not already resizing)
-    else if (!type && !isResizing) {
+    else if (!isResizing) {
       console.log('✋ Starting drag operation');
       setIsDragging(true);
       dragStartY.current = e.clientY;
-    } else {
-      console.log('⚠️ Invalid operation state:', { type, isResizing });
-      return;
     }
     
     originalStartTime.current = startTime;
@@ -74,6 +69,7 @@ export const useEventHandlers = ({
     // Create mousemove handler
     const moveHandler = (e: MouseEvent) => {
       const deltaY = e.clientY - dragStartY.current;
+      console.log('Mouse move:', { deltaY, isDragging, isResizing });
       
       // Handle resize operation
       if (isResizing) {
@@ -117,7 +113,7 @@ export const useEventHandlers = ({
     }
     document.removeEventListener('mouseup', handleMouseUp);
     
-    // Reset states
+    // Reset states after logging
     setIsDragging(false);
     setIsResizing(null);
   };
