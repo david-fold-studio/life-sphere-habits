@@ -53,27 +53,43 @@ export const fetchScheduledHabits = async (userId: string): Promise<ScheduledHab
 
 export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date): Promise<GoogleCalendarEvent[]> => {
   try {
+    // First, get the user's calendar token
     const { data: tokenData, error: tokenError } = await supabase
       .from('calendar_tokens')
       .select('*')
       .eq('user_id', userId)
       .single();
 
-    if (tokenError || !tokenData) {
-      console.error('No calendar token found:', tokenError);
+    if (tokenError) {
+      console.error('Error fetching calendar token:', tokenError);
       return [];
     }
 
+    if (!tokenData || !tokenData.access_token) {
+      console.log('No calendar token found for user');
+      return [];
+    }
+
+    // Format the date range for the API request
     const timeMin = format(weekStart, "yyyy-MM-dd'T'00:00:00'Z'");
     const timeMax = format(addDays(weekStart, 7), "yyyy-MM-dd'T'00:00:00'Z'");
 
-    const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}`, {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
-      },
-    });
+    console.log('Fetching events with token:', tokenData.access_token);
+    console.log('Time range:', { timeMin, timeMax });
+
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Google Calendar API error:', errorData);
       throw new Error('Failed to fetch calendar events');
     }
 
@@ -92,6 +108,6 @@ export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date)
     });
   } catch (error) {
     console.error('Error fetching Google Calendar events:', error);
-    return [];
+    throw error;
   }
 };
