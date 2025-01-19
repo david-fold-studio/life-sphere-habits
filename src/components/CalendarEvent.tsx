@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { EventDialog } from "./calendar/EventDialog";
 import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
@@ -19,7 +19,7 @@ interface CalendarEventProps {
   onEventDelete?: (id: string) => void;
 }
 
-export function CalendarEvent({ 
+export const CalendarEvent = memo(function CalendarEvent({ 
   id, 
   name, 
   startTime, 
@@ -31,8 +31,6 @@ export function CalendarEvent({
   onEventUpdate,
   onEventDelete 
 }: CalendarEventProps) {
-  console.log('Rendering CalendarEvent:', { id, name, isOwner, sphere });
-  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
@@ -47,15 +45,11 @@ export function CalendarEvent({
     sphere,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
-      console.log('Event update triggered:', { id, newStartTime, newEndTime, sphere });
       if (sphere === 'google-calendar') {
-        console.log('Updating Google Calendar event');
         onEventUpdate?.(id, newStartTime, newEndTime);
       } else if (isRecurring || hasInvitees) {
-        console.log('Opening update dialog for recurring/invited event');
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
-        console.log('Updating event directly');
         onEventUpdate(id, newStartTime, newEndTime);
       }
     }
@@ -73,10 +67,8 @@ export function CalendarEvent({
   const cursor = isOwner ? (isDragging ? 'grabbing' : 'grab') : 'default';
 
   const handleCardMouseDown = (e: React.MouseEvent) => {
-    console.log('Card mouse down event:', { id, isOwner, sphere });
     if (!isOwner) return;
     
-    // Only handle drag if we clicked directly on the card (not on resize handles)
     const target = e.target as HTMLElement;
     if (!target.closest('.resize-handle')) {
       handleMouseDown(e);
@@ -84,8 +76,6 @@ export function CalendarEvent({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    console.log('Card clicked:', id);
-    // Only open dialog if we're not dragging
     if (!isDragging) {
       setDialogOpen(true);
     }
@@ -127,7 +117,6 @@ export function CalendarEvent({
           isRecurring={isRecurring}
           hasInvitees={hasInvitees}
           onUpdate={(updateType, notifyInvitees) => {
-            console.log('Update dialog confirmed:', { updateType, notifyInvitees });
             if (onEventUpdate) {
               onEventUpdate(id, startTime, endTime, updateType, notifyInvitees);
             }
@@ -137,4 +126,4 @@ export function CalendarEvent({
       )}
     </>
   );
-}
+});
