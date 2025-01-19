@@ -46,14 +46,14 @@ serve(async (req) => {
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
 
-    // Create the full ISO date-time strings with the user's timezone
+    // Create Date objects with the correct date and time
     const startDateTime = new Date(
       baseDate.getFullYear(),
       baseDate.getMonth(),
       baseDate.getDate(),
       startHours,
       startMinutes
-    ).toLocaleString('sv', { timeZone });
+    );
 
     const endDateTime = new Date(
       baseDate.getFullYear(),
@@ -61,11 +61,19 @@ serve(async (req) => {
       baseDate.getDate(),
       endHours,
       endMinutes
-    ).toLocaleString('sv', { timeZone });
+    );
+
+    // Format dates in RFC3339 format
+    const formatToRFC3339 = (date: Date) => {
+      return date.toLocaleString('sv', { timeZone }).replace(' ', 'T') + ':00';
+    };
+
+    const formattedStart = formatToRFC3339(startDateTime);
+    const formattedEnd = formatToRFC3339(endDateTime);
 
     console.log('Formatted dates:', {
-      startDateTime,
-      endDateTime,
+      startDateTime: formattedStart,
+      endDateTime: formattedEnd,
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date
@@ -127,11 +135,11 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               start: { 
-                dateTime: `${startDateTime}.000Z`,
+                dateTime: formattedStart,
                 timeZone
               },
               end: { 
-                dateTime: `${endDateTime}.000Z`,
+                dateTime: formattedEnd,
                 timeZone
               },
             }),
