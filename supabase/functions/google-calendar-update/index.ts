@@ -15,12 +15,30 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone })
 
-    // Extract the date part from the provided date
-    const datePart = date.split('T')[0]
-    
-    // Format the datetime strings
-    const startDateTime = `${datePart}T${startTime}:00`
-    const endDateTime = `${datePart}T${endTime}:00`
+    // Parse the input date and times
+    const [year, month, day] = date.split('T')[0].split('-')
+    const [startHour, startMinute] = startTime.split(':')
+    const [endHour, endMinute] = endTime.split(':')
+
+    // Create Date objects and format them as ISO strings
+    const startDate = new Date(Date.UTC(
+      parseInt(year),
+      parseInt(month) - 1, // JavaScript months are 0-based
+      parseInt(day),
+      parseInt(startHour),
+      parseInt(startMinute)
+    ))
+
+    const endDate = new Date(Date.UTC(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(endHour),
+      parseInt(endMinute)
+    ))
+
+    const startDateTime = startDate.toISOString()
+    const endDateTime = endDate.toISOString()
 
     console.log('Formatted dates:', {
       startDateTime,
