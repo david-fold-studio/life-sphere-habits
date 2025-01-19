@@ -37,19 +37,13 @@ serve(async (req) => {
       throw new Error('No valid token found');
     }
 
-    // Parse the base date from the UTC string
-    const baseDate = new Date(date);
-    if (isNaN(baseDate.getTime())) {
-      throw new Error('Invalid date format provided');
-    }
-
     // Get hours and minutes from the time strings
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
 
-    // Format the date-time strings in RFC3339 format with the user's timezone
+    // Format the date-time strings in RFC3339 format
     const formatDateTime = (hours: number, minutes: number) => {
-      const datePart = baseDate.toISOString().split('T')[0];
+      const datePart = date.split('T')[0];
       return `${datePart}T${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
     };
 
@@ -110,8 +104,19 @@ serve(async (req) => {
 
     while (retryCount < maxRetries) {
       try {
+        // Check if this is a recurring event instance
+        const isRecurringInstance = eventId.includes('_R');
+        const baseEventId = isRecurringInstance ? eventId.split('_')[0] : eventId;
+        
+        // For recurring instances, we need to use a different endpoint
+        const endpoint = isRecurringInstance
+          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${baseEventId}/instances/${eventId}`
+          : `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
+
+        console.log('Making request to endpoint:', endpoint);
+        
         const response = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+          endpoint,
           {
             method: 'PATCH',
             headers: {
