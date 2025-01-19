@@ -18,6 +18,18 @@ interface ScheduledHabit {
   sphere: string;
 }
 
+interface ScheduledHabitRow {
+  id: string;
+  name: string;
+  starttime: string;
+  endtime: string;
+  day: number;
+  sphere: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
+
 const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> => {
   const { data, error } = await supabase
     .from("scheduled_habits")
@@ -25,7 +37,16 @@ const fetchScheduledHabits = async (userId: string): Promise<ScheduledHabit[]> =
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
-  return data || [];
+  
+  // Map the database rows to our ScheduledHabit interface
+  return (data || []).map((habit: ScheduledHabitRow) => ({
+    id: habit.id,
+    name: habit.name,
+    startTime: habit.starttime,
+    endTime: habit.endtime,
+    day: habit.day,
+    sphere: habit.sphere
+  }));
 };
 
 export default function CalendarView() {
