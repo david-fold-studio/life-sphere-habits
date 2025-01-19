@@ -83,13 +83,8 @@ serve(async (req) => {
 
     while (retryCount < maxRetries) {
       try {
-        // Check if this is a recurring event instance
-        const isRecurringInstance = eventId.includes('_R');
-        const baseEventId = isRecurringInstance ? eventId.split('_R')[0] : eventId;
-        
-        const endpoint = isRecurringInstance
-          ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${baseEventId}/instances/${eventId}`
-          : `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
+        // Use the eventId directly - it already contains the instance ID for recurring events
+        const endpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
         
         console.log('Making request to endpoint:', endpoint);
 
