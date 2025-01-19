@@ -42,20 +42,26 @@ export const useEventHandlers = ({
     // Always prevent default to stop text selection
     e.preventDefault();
     
-    // If this is a resize operation
+    // If this is a resize operation (type is provided)
     if (type) {
       console.log('🔄 Starting resize operation:', type);
-      e.stopPropagation(); // Stop event from reaching the card
+      // Stop event from reaching the card's onClick handler
+      e.stopPropagation();
       setIsResizing(type);
-      setIsDragging(false); // Ensure we're not dragging
+      // Important: We're resizing, so make sure we're not dragging
+      setIsDragging(false);
+      dragStartY.current = e.clientY;
     } 
-    // If this is a drag operation (and we're not already resizing)
-    else if (!isResizing) {
+    // If this is a drag operation (no type provided and not already resizing)
+    else if (!type && !isResizing) {
       console.log('✋ Starting drag operation');
       setIsDragging(true);
+      dragStartY.current = e.clientY;
+    } else {
+      console.log('⚠️ Invalid operation state:', { type, isResizing });
+      return;
     }
     
-    dragStartY.current = e.clientY;
     originalStartTime.current = startTime;
     originalEndTime.current = endTime;
     
