@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
@@ -21,6 +23,7 @@ interface EventEditFormProps {
     endTime: string;
     date: Date;
     isRecurring: boolean;
+    frequency: string | null;
     invitees: string[];
   }) => void;
   onCancel: () => void;
@@ -31,19 +34,23 @@ export function EventEditForm({
   startTime,
   endTime,
   date: initialDate,
+  isRecurring: initialIsRecurring = false,
   onSave,
   onCancel,
 }: EventEditFormProps) {
   const [date, setDate] = useState<Date>(initialDate);
   const [selectedStartTime, setSelectedStartTime] = useState(startTime);
   const [selectedEndTime, setSelectedEndTime] = useState(endTime);
+  const [isRecurring, setIsRecurring] = useState(initialIsRecurring);
+  const [frequency, setFrequency] = useState<string | null>(null);
 
   const handleSave = () => {
     onSave({
       startTime: selectedStartTime,
       endTime: selectedEndTime,
       date,
-      isRecurring: false,
+      isRecurring,
+      frequency: isRecurring ? frequency : null,
       invitees: [],
     });
   };
@@ -113,6 +120,37 @@ export function EventEditForm({
               />
             </div>
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="recurring"
+              checked={isRecurring}
+              onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+            />
+            <Label htmlFor="recurring" className="text-sm font-medium leading-none">
+              Recurring event
+            </Label>
+          </div>
+
+          {isRecurring && (
+            <div className="space-y-2">
+              <Label htmlFor="frequency" className="text-sm font-medium">
+                Frequency
+              </Label>
+              <Select value={frequency || ''} onValueChange={setFrequency}>
+                <SelectTrigger id="frequency">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
