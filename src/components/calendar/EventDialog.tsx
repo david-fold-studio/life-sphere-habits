@@ -74,7 +74,7 @@ export function EventDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0">
-        <Card className="border-0 shadow-none">
+        <Card className="border-0 shadow-none rounded-2xl">
           <CardHeader>
             <CardTitle>{name}</CardTitle>
           </CardHeader>
