@@ -61,7 +61,7 @@ export function EventDialog({
               endTime={endTime}
               date={new Date()}
               isRecurring={isRecurring}
-              hasInvitees={hasInvitees}
+              invitees={[]}
               onSave={() => setIsEditing(false)}
               onCancel={() => setIsEditing(false)}
             />
