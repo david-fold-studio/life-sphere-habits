@@ -15,6 +15,7 @@ interface CalendarEventProps {
   sphere: string;
   day: number;
   isRecurring?: boolean;
+  frequency?: string | null;
   hasInvitees?: boolean;
   isOwner?: boolean;
   onEventUpdate?: (id: string, startTime: string, endTime: string, updateType?: 'single' | 'series', notifyInvitees?: boolean) => void;
@@ -29,6 +30,7 @@ export const CalendarEvent = memo(function CalendarEvent({
   sphere,
   day,
   isRecurring = false,
+  frequency = null,
   hasInvitees = false,
   isOwner = true,
   onEventUpdate,
@@ -119,6 +121,7 @@ export const CalendarEvent = memo(function CalendarEvent({
     endTime: string;
     date: Date;
     isRecurring: boolean;
+    frequency: string | null;
     invitees: string[];
   }) => {
     if (onEventUpdate) {
@@ -142,6 +145,7 @@ export const CalendarEvent = memo(function CalendarEvent({
         {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
         <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
           {name}
+          {isRecurring && <span className="ml-1">🔄</span>}
         </div>
       </Card>
 
@@ -154,6 +158,8 @@ export const CalendarEvent = memo(function CalendarEvent({
             endTime={endTime}
             date={new Date()}
             isRecurring={isRecurring}
+            frequency={frequency}
+            sphere={sphere}
             invitees={[]}
             onSave={handleSave}
             onCancel={() => setFormOpen(false)}

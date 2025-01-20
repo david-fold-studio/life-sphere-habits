@@ -11,9 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { eventId, startTime, endTime, date, user_id, timeZone, newDay } = await req.json()
+    const { eventId, startTime, endTime, date, user_id, timeZone, newDay, isRecurring, frequency } = await req.json()
     
-    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay })
+    console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay, isRecurring, frequency })
 
     // Parse the current event date
     const currentDate = new Date(date)
@@ -117,6 +117,43 @@ serve(async (req) => {
     const accessToken = tokenData[0].access_token
     console.log('Successfully retrieved access token')
 
+    // First, get the event to check its current recurrence settings
+    const getResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+
+    if (!getResponse.ok) {
+      const errorText = await getResponse.text()
+      console.error('Failed to fetch event:', errorText)
+      throw new Error(`Failed to fetch event: ${errorText}`)
+    }
+
+    const eventData = await getResponse.json()
+    console.log('Current event data:', eventData)
+
+    // Prepare the update payload
+    const updatePayload: any = {
+      start: {
+        dateTime: startDateTime,
+        timeZone
+      },
+      end: {
+        dateTime: endDateTime,
+        timeZone
+      }
+    }
+
+    // If the event is recurring and we're updating the frequency
+    if (isRecurring && frequency && frequency !== 'custom') {
+      updatePayload.recurrence = [`RRULE:FREQ=${frequency.toUpperCase()}`]
+    }
+
     const googleResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
       {
@@ -125,16 +162,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          start: {
-            dateTime: startDateTime,
-            timeZone
-          },
-          end: {
-            dateTime: endDateTime,
-            timeZone
-          },
-        }),
+        body: JSON.stringify(updatePayload),
       }
     )
 
@@ -144,10 +172,7 @@ serve(async (req) => {
         status: googleResponse.status,
         statusText: googleResponse.statusText,
         error: errorText,
-        requestBody: {
-          start: { dateTime: startDateTime, timeZone },
-          end: { dateTime: endDateTime, timeZone }
-        }
+        requestBody: updatePayload
       })
       throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
     }
@@ -156,7 +181,12 @@ serve(async (req) => {
     console.log('Successfully updated event:', responseData)
 
     return new Response(
-      JSON.stringify({ success: true, event: responseData }),
+      JSON.stringify({ 
+        success: true, 
+        event: responseData,
+        isRecurring: !!responseData.recurrence,
+        frequency: responseData.recurrence ? 'custom' : null
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

@@ -17,6 +17,8 @@ interface EventEditFormProps {
   endTime: string;
   date: Date;
   isRecurring?: boolean;
+  frequency?: string | null;
+  sphere?: string;
   invitees?: string[];
   onSave: (data: {
     startTime: string;
@@ -35,6 +37,8 @@ export function EventEditForm({
   endTime,
   date: initialDate,
   isRecurring: initialIsRecurring = false,
+  frequency: initialFrequency = null,
+  sphere = '',
   onSave,
   onCancel,
 }: EventEditFormProps) {
@@ -42,7 +46,7 @@ export function EventEditForm({
   const [selectedStartTime, setSelectedStartTime] = useState(startTime);
   const [selectedEndTime, setSelectedEndTime] = useState(endTime);
   const [isRecurring, setIsRecurring] = useState(initialIsRecurring);
-  const [frequency, setFrequency] = useState<string | null>(null);
+  const [frequency, setFrequency] = useState<string | null>(initialFrequency);
 
   const handleSave = () => {
     onSave({
@@ -128,9 +132,10 @@ export function EventEditForm({
               id="recurring"
               checked={isRecurring}
               onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+              disabled={sphere === 'google-calendar'}
             />
             <Label htmlFor="recurring" className="text-sm font-medium leading-none">
-              Recurring event
+              Recurring event {sphere === 'google-calendar' && '(managed by Google Calendar)'}
             </Label>
           </div>
 
@@ -139,7 +144,11 @@ export function EventEditForm({
               <Label htmlFor="frequency" className="text-sm font-medium">
                 Frequency
               </Label>
-              <Select value={frequency || ''} onValueChange={setFrequency}>
+              <Select 
+                value={frequency || ''} 
+                onValueChange={setFrequency}
+                disabled={sphere === 'google-calendar'}
+              >
                 <SelectTrigger id="frequency">
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
@@ -147,6 +156,9 @@ export function EventEditForm({
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
+                  {sphere === 'google-calendar' && (
+                    <SelectItem value="custom">Custom (Google Calendar)</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
