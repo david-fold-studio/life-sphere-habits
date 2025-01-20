@@ -40,7 +40,7 @@ export function EventDialog({
   endTime, 
   sphere,
   isOwner,
-  isRecurring,
+  isRecurring = false,
   frequency,
   invitees = [],
   open,
@@ -63,8 +63,13 @@ export function EventDialog({
     setIsEditing(false);
   };
 
+  const handleClose = () => {
+    setIsEditing(false);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="p-0 rounded-3xl overflow-hidden">
         <Card className="border-0 shadow-none rounded-3xl">
           <CardHeader>
@@ -96,7 +101,7 @@ export function EventDialog({
                 invitees={invitees}
               />
               <CardFooter className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" onClick={handleClose}>
                   Close
                 </Button>
                 {isOwner && sphere !== 'google-calendar' && (
