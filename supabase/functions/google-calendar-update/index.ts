@@ -25,7 +25,7 @@ serve(async (req) => {
     const currentDay = currentDate.getDay()
     
     // Calculate how many days to move based on column difference
-    const daysDifference = newDay - currentDay
+    const daysDifference = (newDay !== undefined ? newDay : currentDay) - currentDay
     
     // Create new date by adding/subtracting the days difference
     const targetDate = new Date(currentDate)
@@ -48,10 +48,9 @@ serve(async (req) => {
     const [startHour, startMinute] = startTime.split(':').map(n => String(n).padStart(2, '0'))
     const [endHour, endMinute] = endTime.split(':').map(n => String(n).padStart(2, '0'))
 
-    // Format the datetime strings in RFC3339 format
-    const formattedTimeZone = timeZone.includes('+') || timeZone.includes('-') ? timeZone : ''
-    const startDateTime = `${year}-${month}-${day}T${startHour}:${startMinute}:00${formattedTimeZone}`
-    const endDateTime = `${year}-${month}-${day}T${endHour}:${endMinute}:00${formattedTimeZone}`
+    // Format the datetime strings in RFC3339 format with the provided timezone
+    const startDateTime = `${year}-${month}-${day}T${startHour}:${startMinute}:00${timeZone}`
+    const endDateTime = `${year}-${month}-${day}T${endHour}:${endMinute}:00${timeZone}`
 
     console.log('Formatted dates for Google Calendar:', {
       startDateTime,
