@@ -1,4 +1,4 @@
-import { CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface EventDetailsProps {
   startTime: string;
@@ -18,26 +18,33 @@ export const EventDetails = ({
   hasInvitees
 }: EventDetailsProps) => {
   return (
-    <CardContent className="space-y-2">
-      <p className="text-sm text-muted-foreground">Time: {startTime} - {endTime}</p>
+    <div className="space-y-3">
+      <div className={cn(
+        "p-2 rounded-md",
+        sphere === 'google-calendar' ? 'bg-blue-50' : `bg-[var(--sphere-${sphere})]`
+      )}>
+        <p className="text-sm font-medium">Time: {startTime} - {endTime}</p>
+      </div>
       
       {isRecurring && (
-        <p className="text-sm text-muted-foreground">
+        <div className="flex items-center text-sm text-muted-foreground">
+          <span className="mr-2">🔄</span>
           Recurring event
-        </p>
+        </div>
       )}
       
       {hasInvitees && (
-        <p className="text-sm text-muted-foreground">
+        <div className="flex items-center text-sm text-muted-foreground">
+          <span className="mr-2">👥</span>
           Has invitees
-        </p>
+        </div>
       )}
 
       {isOwner && sphere !== 'google-calendar' && (
-        <p className="text-sm text-muted-foreground mt-2">
-          Tip: You can drag the event to change its time.
+        <p className="text-sm text-muted-foreground mt-4 italic">
+          Tip: You can drag the event to change its time
         </p>
       )}
-    </CardContent>
+    </div>
   );
 };

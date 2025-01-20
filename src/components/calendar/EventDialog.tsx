@@ -1,10 +1,11 @@
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { handleEventDelete } from "./eventDialogUtils";
 import { EventDetails } from "./EventDetails";
 import { EventEditForm } from "./EventEditForm";
@@ -50,7 +51,7 @@ export function EventDialog({
       <DialogContent className="p-0 rounded-3xl overflow-hidden">
         <Card className="border-0 shadow-none rounded-3xl">
           <CardHeader>
-            <CardTitle>{name}</CardTitle>
+            <DialogTitle className="text-lg font-semibold">{name}</DialogTitle>
           </CardHeader>
           
           {isEditing ? (
@@ -67,14 +68,16 @@ export function EventDialog({
             />
           ) : (
             <>
-              <EventDetails
-                startTime={startTime}
-                endTime={endTime}
-                isOwner={isOwner}
-                sphere={sphere}
-                isRecurring={isRecurring}
-                hasInvitees={hasInvitees}
-              />
+              <CardContent>
+                <EventDetails
+                  startTime={startTime}
+                  endTime={endTime}
+                  isOwner={isOwner}
+                  sphere={sphere}
+                  isRecurring={isRecurring}
+                  hasInvitees={hasInvitees}
+                />
+              </CardContent>
               <CardFooter className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={handleClose}>
                   Close
