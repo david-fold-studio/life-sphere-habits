@@ -3,11 +3,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EventDialogProps {
   id: string;
@@ -73,28 +73,30 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{name}</DialogTitle>
-        </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">Time: {startTime} - {endTime}</p>
-          {isOwner && sphere !== 'google-calendar' && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Tip: You can drag the event to change its time.
-            </p>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-          {isOwner && sphere !== 'google-calendar' && (
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+      <DialogContent className="p-0">
+        <Card className="border-0 shadow-none">
+          <CardHeader>
+            <CardTitle>{name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Time: {startTime} - {endTime}</p>
+            {isOwner && sphere !== 'google-calendar' && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Tip: You can drag the event to change its time.
+              </p>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
             </Button>
-          )}
-        </DialogFooter>
+            {isOwner && sphere !== 'google-calendar' && (
+              <Button variant="destructive" onClick={handleDelete}>
+                Delete
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
       </DialogContent>
     </Dialog>
   );
