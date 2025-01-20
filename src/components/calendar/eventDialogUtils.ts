@@ -1,11 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Toast } from "@/hooks/use-toast";
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 export const handleEventDelete = async (
   id: string,
   sphere: string,
   onOpenChange: (open: boolean) => void,
-  toast: (props: Toast) => void,
+  toast: (props: ToastProps) => void,
   onDelete?: (id: string) => void
 ) => {
   if (sphere === 'google-calendar') {
