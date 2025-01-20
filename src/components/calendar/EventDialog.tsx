@@ -3,7 +3,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { handleEventDelete } from "./eventDialogUtils";
 import { EventDetails } from "./EventDetails";
@@ -106,7 +106,7 @@ export function EventDialog({
                     </Button>
                     <Button 
                       variant="destructive" 
-                      onClick={() => handleEventDelete(id, sphere, onDelete, toast, onOpenChange)}
+                      onClick={() => handleEventDelete(id, sphere, onOpenChange, toast, onDelete)}
                     >
                       Delete
                     </Button>
