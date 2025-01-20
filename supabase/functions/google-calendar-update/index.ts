@@ -15,18 +15,33 @@ serve(async (req) => {
     
     console.log('Received request:', { eventId, startTime, endTime, date, user_id, timeZone, newDay })
 
-    // Parse the week start date and ensure it's valid
-    const weekStart = new Date(date)
-    if (isNaN(weekStart.getTime())) {
+    // Parse the current event date
+    const currentDate = new Date(date)
+    if (isNaN(currentDate.getTime())) {
       throw new Error('Invalid date provided')
     }
 
-    // Set to the start of the week (Sunday)
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+    // Calculate days to add/subtract to reach target day
+    const currentDay = currentDate.getDay()
+    const targetDay = newDay
     
-    // Calculate target date by adding the column number (newDay) to week start
-    const targetDate = new Date(weekStart)
-    targetDate.setDate(weekStart.getDate() + (newDay || 0))
+    // Calculate the shortest path to the target day
+    let daysToAdd = targetDay - currentDay
+    if (daysToAdd < 0) {
+      daysToAdd += 7 // Add a week if we need to move forward
+    }
+
+    // Create new date by adding the calculated days
+    const targetDate = new Date(currentDate)
+    targetDate.setDate(currentDate.getDate() + daysToAdd)
+
+    console.log('Date calculations:', {
+      currentDate: currentDate.toISOString(),
+      currentDay,
+      targetDay,
+      daysToAdd,
+      resultingDate: targetDate.toISOString()
+    })
 
     // Format the date components
     const year = targetDate.getFullYear()
@@ -48,9 +63,7 @@ serve(async (req) => {
       timeZone,
       originalTimes: { startTime, endTime },
       originalDate: date,
-      targetDate: targetDate.toISOString(),
-      weekStart: weekStart.toISOString(),
-      newDay
+      targetDate: targetDate.toISOString()
     })
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
