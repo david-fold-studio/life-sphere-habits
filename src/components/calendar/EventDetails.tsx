@@ -6,8 +6,7 @@ interface EventDetailsProps {
   isOwner: boolean;
   sphere: string;
   isRecurring?: boolean;
-  frequency?: string;
-  invitees?: string[];
+  hasInvitees?: boolean;
 }
 
 export const EventDetails = ({ 
@@ -16,28 +15,22 @@ export const EventDetails = ({
   isOwner, 
   sphere,
   isRecurring,
-  frequency,
-  invitees = []
+  hasInvitees
 }: EventDetailsProps) => {
   return (
     <CardContent className="space-y-2">
       <p className="text-sm text-muted-foreground">Time: {startTime} - {endTime}</p>
       
-      {isRecurring && frequency && (
+      {isRecurring && (
         <p className="text-sm text-muted-foreground">
-          Recurring: {frequency.charAt(0).toUpperCase() + frequency.slice(1)}
+          Recurring event
         </p>
       )}
       
-      {invitees.length > 0 && (
-        <div className="text-sm text-muted-foreground">
-          <p>Invitees:</p>
-          <ul className="list-disc list-inside">
-            {invitees.map((email, index) => (
-              <li key={index}>{email}</li>
-            ))}
-          </ul>
-        </div>
+      {hasInvitees && (
+        <p className="text-sm text-muted-foreground">
+          Has invitees
+        </p>
       )}
 
       {isOwner && sphere !== 'google-calendar' && (

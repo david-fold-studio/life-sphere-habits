@@ -18,19 +18,10 @@ interface EventDialogProps {
   sphere: string;
   isOwner: boolean;
   isRecurring?: boolean;
-  frequency?: string;
-  invitees?: string[];
+  hasInvitees?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: (id: string) => void;
-  onUpdate?: (id: string, data: {
-    startTime: string;
-    endTime: string;
-    date: Date;
-    isRecurring: boolean;
-    frequency?: string;
-    invitees: string[];
-  }) => void;
 }
 
 export function EventDialog({ 
@@ -41,27 +32,13 @@ export function EventDialog({
   sphere,
   isOwner,
   isRecurring = false,
-  frequency,
-  invitees = [],
+  hasInvitees = false,
   open,
   onOpenChange,
-  onDelete,
-  onUpdate
+  onDelete
 }: EventDialogProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-
-  const handleSave = (data: {
-    startTime: string;
-    endTime: string;
-    date: Date;
-    isRecurring: boolean;
-    frequency?: string;
-    invitees: string[];
-  }) => {
-    onUpdate?.(id, data);
-    setIsEditing(false);
-  };
 
   const handleClose = () => {
     setIsEditing(false);
@@ -82,11 +59,10 @@ export function EventDialog({
               name={name}
               startTime={startTime}
               endTime={endTime}
-              date={new Date()} // TODO: Pass actual date
+              date={new Date()}
               isRecurring={isRecurring}
-              frequency={frequency}
-              invitees={invitees}
-              onSave={handleSave}
+              hasInvitees={hasInvitees}
+              onSave={() => setIsEditing(false)}
               onCancel={() => setIsEditing(false)}
             />
           ) : (
@@ -97,8 +73,7 @@ export function EventDialog({
                 isOwner={isOwner}
                 sphere={sphere}
                 isRecurring={isRecurring}
-                frequency={frequency}
-                invitees={invitees}
+                hasInvitees={hasInvitees}
               />
               <CardFooter className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={handleClose}>
