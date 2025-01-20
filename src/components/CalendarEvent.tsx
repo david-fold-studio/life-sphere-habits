@@ -1,10 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { useState, memo, useEffect } from "react";
-import { EventDialog } from "./calendar/EventDialog";
-import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
+import { EventEditForm } from "./calendar/EventEditForm";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
 import { useEventHandlers } from "./calendar/EventHandlers";
 import { EventResizeHandles } from "./calendar/EventResizeHandles";
+import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
 
 interface CalendarEventProps {
   id: string;
@@ -33,7 +33,7 @@ export const CalendarEvent = memo(function CalendarEvent({
   onEventUpdate,
   onEventDelete 
 }: CalendarEventProps) {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [visualStartTime, setVisualStartTime] = useState(startTime);
   const [visualEndTime, setVisualEndTime] = useState(endTime);
@@ -109,7 +109,20 @@ export const CalendarEvent = memo(function CalendarEvent({
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (!isDragging) {
-      setDialogOpen(true);
+      setFormOpen(true);
+    }
+  };
+
+  const handleSave = (data: {
+    startTime: string;
+    endTime: string;
+    date: Date;
+    isRecurring: boolean;
+    invitees: string[];
+  }) => {
+    if (onEventUpdate) {
+      onEventUpdate(id, data.startTime, data.endTime);
+      setFormOpen(false);
     }
   };
 
@@ -131,20 +144,19 @@ export const CalendarEvent = memo(function CalendarEvent({
         </div>
       </Card>
 
-      <EventDialog
-        id={id}
-        name={name}
-        startTime={startTime}
-        endTime={endTime}
-        sphere={sphere}
-        isOwner={isOwner}
-        isRecurring={isRecurring}
-        hasInvitees={hasInvitees}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onDelete={onEventDelete}
-        onEventUpdate={onEventUpdate}
-      />
+      {formOpen && (
+        <EventEditForm
+          id={id}
+          name={name}
+          startTime={startTime}
+          endTime={endTime}
+          date={new Date()}
+          isRecurring={isRecurring}
+          invitees={[]}
+          onSave={handleSave}
+          onCancel={() => setFormOpen(false)}
+        />
+      )}
 
       {(isRecurring || hasInvitees) && (
         <EventUpdateDialog
