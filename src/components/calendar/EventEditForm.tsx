@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface EventEditFormProps {
   id: string;
@@ -77,19 +78,25 @@ export function EventEditForm({
               </PopoverContent>
             </Popover>
 
-            <Input
-              type="time"
-              value={selectedStartTime}
-              onChange={(e) => setSelectedStartTime(e.target.value)}
-              className="w-full appearance-none"
-            />
+            <div className="relative">
+              <Input
+                type="time"
+                value={selectedStartTime}
+                onChange={(e) => setSelectedStartTime(e.target.value)}
+                className="w-full pr-8"
+              />
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 pointer-events-none" />
+            </div>
 
-            <Input
-              type="time"
-              value={selectedEndTime}
-              onChange={(e) => setSelectedEndTime(e.target.value)}
-              className="w-full appearance-none"
-            />
+            <div className="relative">
+              <Input
+                type="time"
+                value={selectedEndTime}
+                onChange={(e) => setSelectedEndTime(e.target.value)}
+                className="w-full pr-8"
+              />
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
