@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
 
 interface EventEditFormProps {
   id: string;
@@ -54,52 +53,43 @@ export function EventEditForm({
       
       <div className="space-y-6">
         <div className="space-y-4">
-          <Label className="text-base font-semibold">Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !date && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+          <Label className="text-base font-semibold">When</Label>
+          <div className="grid grid-cols-3 gap-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  {date ? format(date, "EEE, MMM d") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
-        <div className="space-y-4">
-          <Label className="text-base font-semibold">Time</Label>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Start</Label>
-              <Input
-                type="time"
-                value={selectedStartTime}
-                onChange={(e) => setSelectedStartTime(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>End</Label>
-              <Input
-                type="time"
-                value={selectedEndTime}
-                onChange={(e) => setSelectedEndTime(e.target.value)}
-                className="w-full"
-              />
-            </div>
+            <Input
+              type="time"
+              value={selectedStartTime}
+              onChange={(e) => setSelectedStartTime(e.target.value)}
+              className="w-full"
+            />
+
+            <Input
+              type="time"
+              value={selectedEndTime}
+              onChange={(e) => setSelectedEndTime(e.target.value)}
+              className="w-full"
+            />
           </div>
         </div>
       </div>
