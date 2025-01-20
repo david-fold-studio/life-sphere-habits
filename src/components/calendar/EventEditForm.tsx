@@ -4,7 +4,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
@@ -53,17 +52,6 @@ export function EventEditForm({
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">{name}</h2>
       
-      <Card className="bg-blue-50/50 mb-6">
-        <CardContent className="p-4">
-          <div className="text-lg">
-            Time: {format(date, "EEEE, MMMM d")}
-          </div>
-          <div className="text-lg mt-1">
-            {selectedStartTime} - {selectedEndTime}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="space-y-6">
         <div className="space-y-4">
           <Label className="text-base font-semibold">Date</Label>
