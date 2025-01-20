@@ -81,14 +81,14 @@ export function EventEditForm({
               type="time"
               value={selectedStartTime}
               onChange={(e) => setSelectedStartTime(e.target.value)}
-              className="w-full"
+              className="w-full appearance-none"
             />
 
             <Input
               type="time"
               value={selectedEndTime}
               onChange={(e) => setSelectedEndTime(e.target.value)}
-              className="w-full"
+              className="w-full appearance-none"
             />
           </div>
         </div>
