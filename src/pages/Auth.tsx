@@ -109,7 +109,7 @@ const Auth = () => {
                 },
               },
             }}
-            providers={["google"]}
+            providers={[]} // Removed 'google' from providers array
             view="sign_in"
             showLinks={true}
             redirectTo={window.location.origin}
