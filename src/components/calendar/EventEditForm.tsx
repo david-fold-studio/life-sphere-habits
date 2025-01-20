@@ -64,9 +64,10 @@ export function EventEditForm({
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-6 p-6">
+      {/* Date Selection */}
       <div className="space-y-2">
-        <Label>Date</Label>
+        <Label className="text-base font-semibold">Date</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -77,7 +78,7 @@ export function EventEditForm({
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
+              {date ? format(date, "EEEE, MMMM d") : <span>Pick a date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
@@ -91,62 +92,76 @@ export function EventEditForm({
         </Popover>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Start Time</Label>
-          <Input
-            type="time"
-            value={selectedStartTime}
-            onChange={(e) => setSelectedStartTime(e.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>End Time</Label>
-          <Input
-            type="time"
-            value={selectedEndTime}
-            onChange={(e) => setSelectedEndTime(e.target.value)}
-          />
+      {/* Time Selection */}
+      <div className="space-y-4">
+        <Label className="text-base font-semibold">Time</Label>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Start</Label>
+            <Input
+              type="time"
+              value={selectedStartTime}
+              onChange={(e) => setSelectedStartTime(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>End</Label>
+            <Input
+              type="time"
+              value={selectedEndTime}
+              onChange={(e) => setSelectedEndTime(e.target.value)}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="recurring"
-          checked={isRecurring}
-          onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-        />
-        <Label htmlFor="recurring">Recurring Event</Label>
+      {/* Recurring Options */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="recurring"
+            checked={isRecurring}
+            onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+          />
+          <Label htmlFor="recurring" className="font-medium">
+            Recurring Event
+          </Label>
+        </div>
+
+        {isRecurring && (
+          <div className="space-y-2 pl-6">
+            <Label>Frequency</Label>
+            <Select value={frequency} onValueChange={setFrequency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
-      {isRecurring && (
-        <div className="space-y-2">
-          <Label>Frequency</Label>
-          <Select value={frequency} onValueChange={setFrequency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
+      {/* Invitees */}
       <div className="space-y-2">
-        <Label>Invitees (comma-separated emails)</Label>
+        <Label className="text-base font-semibold">Invitees</Label>
         <Input
           type="text"
           value={inviteesInput}
           onChange={(e) => setInviteesInput(e.target.value)}
-          placeholder="email1@example.com, email2@example.com"
+          placeholder="Enter email addresses separated by commas"
+          className="w-full"
         />
       </div>
 
-      <div className="flex justify-end space-x-2">
+      {/* Action Buttons */}
+      <div className="flex justify-end space-x-2 pt-4">
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
