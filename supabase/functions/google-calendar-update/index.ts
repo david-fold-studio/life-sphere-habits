@@ -21,25 +21,21 @@ serve(async (req) => {
       throw new Error('Invalid date provided')
     }
 
-    // Calculate days to add/subtract to reach target day
+    // Get the current day of the week (0-6)
     const currentDay = currentDate.getDay()
-    const targetDay = newDay
     
-    // Calculate the shortest path to the target day
-    let daysToAdd = targetDay - currentDay
-    if (daysToAdd < 0) {
-      daysToAdd += 7 // Add a week if we need to move forward
-    }
-
-    // Create new date by adding the calculated days
+    // Calculate how many days to move based on column difference
+    const daysDifference = newDay - currentDay
+    
+    // Create new date by adding/subtracting the days difference
     const targetDate = new Date(currentDate)
-    targetDate.setDate(currentDate.getDate() + daysToAdd)
+    targetDate.setDate(currentDate.getDate() + daysDifference)
 
     console.log('Date calculations:', {
       currentDate: currentDate.toISOString(),
       currentDay,
-      targetDay,
-      daysToAdd,
+      newDay,
+      daysDifference,
       resultingDate: targetDate.toISOString()
     })
 
