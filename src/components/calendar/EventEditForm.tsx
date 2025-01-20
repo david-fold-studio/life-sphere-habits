@@ -51,7 +51,7 @@ export function EventEditForm({
   const focusTimeInput = (inputId: string) => {
     const input = document.getElementById(inputId) as HTMLInputElement;
     if (input) {
-      input.showPicker();
+      input.click();
     }
   };
 
@@ -91,7 +91,7 @@ export function EventEditForm({
                 type="time"
                 value={selectedStartTime}
                 onChange={(e) => setSelectedStartTime(e.target.value)}
-                className="w-full pr-8 [&::-webkit-calendar-picker-indicator]:hidden"
+                className="w-full pr-8"
               />
               <ChevronDown 
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 cursor-pointer" 
@@ -105,7 +105,7 @@ export function EventEditForm({
                 type="time"
                 value={selectedEndTime}
                 onChange={(e) => setSelectedEndTime(e.target.value)}
-                className="w-full pr-8 [&::-webkit-calendar-picker-indicator]:hidden"
+                className="w-full pr-8"
               />
               <ChevronDown 
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 cursor-pointer" 
