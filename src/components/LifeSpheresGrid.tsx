@@ -1,4 +1,4 @@
-import { Heart, Brain, Users, Briefcase, Gem, Book, Leaf } from "lucide-react";
+import { Heart, Users, Clock, Leaf, HandHeart, Briefcase, DollarSign } from "lucide-react";
 import { LifeSphereCard } from "./LifeSphereCard";
 
 interface Habit {
@@ -16,172 +16,172 @@ interface Goal {
 
 const spheresData = [
   {
-    id: "health",
-    title: "Health & Fitness",
+    id: "faith",
+    title: "Faith",
     icon: <Heart className="h-5 w-5" />,
     color: "border-rose-25 bg-rose-5",
     goals: [
       {
         id: "g1",
-        name: "Get in Shape",
+        name: "Spiritual Growth",
         targetDate: "2024-12-31",
         habits: [
-          { id: "1", name: "Morning Exercise", frequency: "Every weekday" },
+          { id: "1", name: "Daily Prayer", frequency: "Daily" },
           { id: "2", name: "Meditation", frequency: "Daily" },
         ],
       },
       {
         id: "g2",
-        name: "Improve Diet",
+        name: "Community Service",
         targetDate: "2024-06-30",
         habits: [
-          { id: "3", name: "Meal Planning" },
+          { id: "3", name: "Volunteer Work" },
         ],
       },
     ],
   },
   {
-    id: "mental",
-    title: "Mental Wellbeing",
-    icon: <Brain className="h-5 w-5" />,
-    color: "border-purple-25 bg-purple-5",
+    id: "people",
+    title: "People",
+    icon: <Users className="h-5 w-5" />,
+    color: "border-amber-25 bg-amber-5",
     goals: [
       {
         id: "g3",
-        name: "Reduce Stress",
+        name: "Build Relationships",
         targetDate: "2024-12-31",
         habits: [
-          { id: "4", name: "Journaling", frequency: "Daily" },
-          { id: "5", name: "Therapy Session", frequency: "Bi-weekly" },
+          { id: "4", name: "Family Time", frequency: "Weekly" },
+          { id: "5", name: "Friend Meetups", frequency: "Monthly" },
         ],
       },
       {
         id: "g4",
-        name: "Digital Balance",
+        name: "Social Skills",
         targetDate: "2024-06-30",
         habits: [
-          { id: "6", name: "Digital Detox" },
+          { id: "6", name: "Networking Events" },
         ],
       },
     ],
   },
   {
-    id: "relationships",
-    title: "Relationships",
-    icon: <Users className="h-5 w-5" />,
-    color: "border-blue-25 bg-blue-5",
+    id: "routine",
+    title: "Routine",
+    icon: <Clock className="h-5 w-5" />,
+    color: "border-cyan-25 bg-cyan-5",
     goals: [
       {
         id: "g5",
-        name: "Strengthen Family Bonds",
+        name: "Morning Routine",
         targetDate: "2024-12-31",
         habits: [
-          { id: "7", name: "Family Dinner", frequency: "Weekly" },
-          { id: "8", name: "Call Parents" },
+          { id: "7", name: "Early Rising", frequency: "Daily" },
+          { id: "8", name: "Planning Day" },
         ],
       },
       {
         id: "g6",
-        name: "Nurture Partnership",
+        name: "Evening Routine",
         targetDate: "2024-06-30",
         habits: [
-          { id: "9", name: "Date Night", frequency: "Bi-weekly" },
+          { id: "9", name: "Reflection Time", frequency: "Daily" },
         ],
       },
     ],
   },
   {
-    id: "career",
-    title: "Career & Work",
-    icon: <Briefcase className="h-5 w-5" />,
-    color: "border-amber-25 bg-amber-5",
+    id: "health",
+    title: "Health",
+    icon: <Leaf className="h-5 w-5" />,
+    color: "border-emerald-25 bg-emerald-5",
     goals: [
       {
         id: "g7",
-        name: "Professional Development",
+        name: "Physical Fitness",
         targetDate: "2024-12-31",
         habits: [
-          { id: "10", name: "Skill Development", frequency: "Weekly" },
-          { id: "11", name: "Networking", frequency: "Monthly" },
+          { id: "10", name: "Exercise", frequency: "Weekly" },
+          { id: "11", name: "Healthy Eating", frequency: "Daily" },
         ],
       },
       {
         id: "g8",
-        name: "Career Planning",
+        name: "Mental Wellness",
         targetDate: "2024-06-30",
         habits: [],
       },
     ],
   },
   {
-    id: "personal",
-    title: "Personal Growth",
-    icon: <Gem className="h-5 w-5" />,
-    color: "border-emerald-25 bg-emerald-5",
+    id: "service",
+    title: "Service",
+    icon: <HandHeart className="h-5 w-5" />,
+    color: "border-blue-25 bg-blue-5",
     goals: [
       {
         id: "g9",
-        name: "Self-Improvement",
+        name: "Community Impact",
         targetDate: "2024-12-31",
         habits: [
-          { id: "13", name: "Reading", frequency: "Daily" },
-          { id: "14", name: "Learning Language", frequency: "Weekly" },
+          { id: "13", name: "Volunteering", frequency: "Weekly" },
+          { id: "14", name: "Mentoring", frequency: "Monthly" },
         ],
       },
       {
         id: "g10",
-        name: "Personal Reflection",
+        name: "Giving Back",
         targetDate: "2024-06-30",
         habits: [
-          { id: "15", name: "Self-reflection" },
+          { id: "15", name: "Charity Work" },
         ],
       },
     ],
   },
   {
-    id: "education",
-    title: "Education",
-    icon: <Book className="h-5 w-5" />,
-    color: "border-cyan-25 bg-cyan-5",
+    id: "work",
+    title: "Work",
+    icon: <Briefcase className="h-5 w-5" />,
+    color: "border-purple-25 bg-purple-5",
     goals: [
       {
         id: "g11",
-        name: "Continuous Learning",
+        name: "Career Growth",
         targetDate: "2024-12-31",
         habits: [
-          { id: "16", name: "Online Course", frequency: "Weekly" },
-          { id: "17", name: "Study Session", frequency: "Every weekday" },
+          { id: "16", name: "Skill Development", frequency: "Weekly" },
+          { id: "17", name: "Networking", frequency: "Monthly" },
         ],
       },
       {
         id: "g12",
-        name: "Research Projects",
+        name: "Professional Development",
         targetDate: "2024-06-30",
         habits: [],
       },
     ],
   },
   {
-    id: "environment",
-    title: "Environment",
-    icon: <Leaf className="h-5 w-5" />,
-    color: "border-teal-25 bg-teal-5",
+    id: "money",
+    title: "Money",
+    icon: <DollarSign className="h-5 w-5" />,
+    color: "border-[#D946EF25] bg-[#D946EF10]",
     goals: [
       {
         id: "g13",
-        name: "Sustainable Living",
+        name: "Financial Goals",
         targetDate: "2024-12-31",
         habits: [
-          { id: "19", name: "Recycling", frequency: "Daily" },
-          { id: "20", name: "Garden Care", frequency: "Weekly" },
+          { id: "19", name: "Budgeting", frequency: "Weekly" },
+          { id: "20", name: "Investment Review", frequency: "Monthly" },
         ],
       },
       {
         id: "g14",
-        name: "Environmental Impact",
+        name: "Wealth Building",
         targetDate: "2024-06-30",
         habits: [
-          { id: "21", name: "Eco-audit" },
+          { id: "21", name: "Financial Education" },
         ],
       },
     ],

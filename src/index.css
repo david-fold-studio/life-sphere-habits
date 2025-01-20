@@ -35,12 +35,12 @@
     --radius: 0.5rem;
 
     /* Sphere Colors */
-    --sphere-health: #FFDEE2;
-    --sphere-mental: #E5DEFF;
-    --sphere-relationships: #D3E4FD;
-    --sphere-career: #FEC6A1;
-    --sphere-personal: #F2FCE2;
-    --sphere-education: #FEF7CD;
-    --sphere-environment: #FDE1D3;
+    --sphere-faith: #ffdee2;
+    --sphere-people: #fff3e0;
+    --sphere-routine: #FEF7CD;
+    --sphere-health: #F2FCE2;
+    --sphere-service: #e0f2fe;
+    --sphere-work: #f3e8ff;
+    --sphere-money: #fae8ff;
   }
 }
