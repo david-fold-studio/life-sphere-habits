@@ -79,7 +79,10 @@ export type Database = {
           created_at: string
           day: number
           endtime: string
+          frequency: string | null
           id: string
+          invitees: string[] | null
+          is_recurring: boolean | null
           name: string
           sphere: string
           starttime: string
@@ -90,7 +93,10 @@ export type Database = {
           created_at?: string
           day: number
           endtime: string
+          frequency?: string | null
           id?: string
+          invitees?: string[] | null
+          is_recurring?: boolean | null
           name: string
           sphere: string
           starttime: string
@@ -101,7 +107,10 @@ export type Database = {
           created_at?: string
           day?: number
           endtime?: string
+          frequency?: string | null
           id?: string
+          invitees?: string[] | null
+          is_recurring?: boolean | null
           name?: string
           sphere?: string
           starttime?: string
