@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { useState, memo, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { EventEditForm } from "./calendar/EventEditForm";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
 import { useEventHandlers } from "./calendar/EventHandlers";
@@ -144,19 +145,21 @@ export const CalendarEvent = memo(function CalendarEvent({
         </div>
       </Card>
 
-      {formOpen && (
-        <EventEditForm
-          id={id}
-          name={name}
-          startTime={startTime}
-          endTime={endTime}
-          date={new Date()}
-          isRecurring={isRecurring}
-          invitees={[]}
-          onSave={handleSave}
-          onCancel={() => setFormOpen(false)}
-        />
-      )}
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="p-0 rounded-3xl overflow-hidden">
+          <EventEditForm
+            id={id}
+            name={name}
+            startTime={startTime}
+            endTime={endTime}
+            date={new Date()}
+            isRecurring={isRecurring}
+            invitees={[]}
+            onSave={handleSave}
+            onCancel={() => setFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {(isRecurring || hasInvitees) && (
         <EventUpdateDialog
