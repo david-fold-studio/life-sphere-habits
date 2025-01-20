@@ -47,16 +47,18 @@ serve(async (req) => {
       throw new Error('Invalid time format')
     }
 
-    // Create Date objects for start and end times
-    const startDateTime = new Date(targetDate)
-    startDateTime.setHours(startHour, startMinute, 0)
+    // Format the date components
+    const year = targetDate.getFullYear()
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0')
+    const day = String(targetDate.getDate()).padStart(2, '0')
 
-    const endDateTime = new Date(targetDate)
-    endDateTime.setHours(endHour, endMinute, 0)
+    // Create RFC3339 formatted datetime strings with the timezone
+    const startDateTime = `${year}-${month}-${day}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`
+    const endDateTime = `${year}-${month}-${day}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`
 
     console.log('Time calculations:', {
-      startDateTime: startDateTime.toISOString(),
-      endDateTime: endDateTime.toISOString(),
+      startDateTime,
+      endDateTime,
       timeZone
     })
 
@@ -125,11 +127,11 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           start: {
-            dateTime: startDateTime.toISOString(),
+            dateTime: startDateTime,
             timeZone
           },
           end: {
-            dateTime: endDateTime.toISOString(),
+            dateTime: endDateTime,
             timeZone
           },
         }),
@@ -143,8 +145,8 @@ serve(async (req) => {
         statusText: googleResponse.statusText,
         error: errorText,
         requestBody: {
-          start: { dateTime: startDateTime.toISOString(), timeZone },
-          end: { dateTime: endDateTime.toISOString(), timeZone }
+          start: { dateTime: startDateTime, timeZone },
+          end: { dateTime: endDateTime, timeZone }
         }
       })
       throw new Error(`Failed to update calendar event: ${googleResponse.status} ${googleResponse.statusText} - ${errorText}`)
