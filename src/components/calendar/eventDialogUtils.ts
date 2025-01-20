@@ -11,7 +11,7 @@ export const handleEventDelete = async (
   if (sphere === 'google-calendar') {
     toast({
       title: "Cannot delete",
-      description: "Google Calendar events cannot be deleted from this interface.",
+      children: "Google Calendar events cannot be deleted from this interface.",
       variant: "destructive",
     });
     return;
@@ -31,13 +31,13 @@ export const handleEventDelete = async (
 
     toast({
       title: "Event deleted",
-      description: "The event has been deleted successfully.",
+      children: "The event has been deleted successfully.",
     });
   } catch (error) {
     console.error('Error deleting event:', error);
     toast({
       title: "Error",
-      description: "Failed to delete the event.",
+      children: "Failed to delete the event.",
       variant: "destructive",
     });
   }
