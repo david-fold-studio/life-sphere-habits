@@ -48,6 +48,13 @@ export function EventEditForm({
     });
   };
 
+  const focusTimeInput = (inputId: string) => {
+    const input = document.getElementById(inputId) as HTMLInputElement;
+    if (input) {
+      input.showPicker();
+    }
+  };
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">{name}</h2>
@@ -80,22 +87,30 @@ export function EventEditForm({
 
             <div className="relative">
               <Input
+                id="start-time"
                 type="time"
                 value={selectedStartTime}
                 onChange={(e) => setSelectedStartTime(e.target.value)}
-                className="w-full pr-8"
+                className="w-full pr-8 [&::-webkit-calendar-picker-indicator]:hidden"
               />
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 pointer-events-none" />
+              <ChevronDown 
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 cursor-pointer" 
+                onClick={() => focusTimeInput('start-time')}
+              />
             </div>
 
             <div className="relative">
               <Input
+                id="end-time"
                 type="time"
                 value={selectedEndTime}
                 onChange={(e) => setSelectedEndTime(e.target.value)}
-                className="w-full pr-8"
+                className="w-full pr-8 [&::-webkit-calendar-picker-indicator]:hidden"
               />
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 pointer-events-none" />
+              <ChevronDown 
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 cursor-pointer" 
+                onClick={() => focusTimeInput('end-time')}
+              />
             </div>
           </div>
         </div>
