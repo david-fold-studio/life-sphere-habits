@@ -143,6 +143,7 @@ export const CalendarEvent = memo(function CalendarEvent({
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onDelete={onEventDelete}
+        onEventUpdate={onEventUpdate}
       />
 
       {(isRecurring || hasInvitees) && (

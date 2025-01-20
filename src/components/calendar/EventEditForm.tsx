@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 interface EventEditFormProps {
   id: string;
@@ -14,14 +13,12 @@ interface EventEditFormProps {
   endTime: string;
   date: Date;
   isRecurring?: boolean;
-  frequency?: string;
   invitees?: string[];
   onSave: (data: {
     startTime: string;
     endTime: string;
     date: Date;
     isRecurring: boolean;
-    frequency?: string;
     invitees: string[];
   }) => void;
   onCancel: () => void;

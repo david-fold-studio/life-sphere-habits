@@ -23,6 +23,7 @@ interface EventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDelete?: (id: string) => void;
+  onEventUpdate?: (id: string, startTime: string, endTime: string) => void;
 }
 
 export function EventDialog({ 
@@ -36,7 +37,8 @@ export function EventDialog({
   hasInvitees = false,
   open,
   onOpenChange,
-  onDelete
+  onDelete,
+  onEventUpdate
 }: EventDialogProps) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -46,14 +48,27 @@ export function EventDialog({
     onOpenChange(false);
   };
 
+  const handleSave = (data: {
+    startTime: string;
+    endTime: string;
+    date: Date;
+    isRecurring: boolean;
+    invitees: string[];
+  }) => {
+    if (onEventUpdate) {
+      onEventUpdate(id, data.startTime, data.endTime);
+      setIsEditing(false);
+      toast({
+        title: "Event updated",
+        description: "The event has been updated successfully.",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="p-0 rounded-3xl overflow-hidden">
         <Card className="border-0 shadow-none rounded-3xl">
-          <CardHeader>
-            <DialogTitle className="text-lg font-semibold">{name}</DialogTitle>
-          </CardHeader>
-          
           {isEditing ? (
             <EventEditForm
               id={id}
@@ -63,11 +78,14 @@ export function EventDialog({
               date={new Date()}
               isRecurring={isRecurring}
               invitees={[]}
-              onSave={() => setIsEditing(false)}
+              onSave={handleSave}
               onCancel={() => setIsEditing(false)}
             />
           ) : (
             <>
+              <CardHeader>
+                <DialogTitle className="text-lg font-semibold">{name}</DialogTitle>
+              </CardHeader>
               <CardContent>
                 <EventDetails
                   startTime={startTime}
