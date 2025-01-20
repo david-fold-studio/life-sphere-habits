@@ -14,21 +14,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
+    // Enable session persistence
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Enable persistence
+    supabase.auth.setSession({
+      access_token: localStorage.getItem('sb-access-token') || '',
+      refresh_token: localStorage.getItem('sb-refresh-token') || '',
+    }).catch(console.error);
 
-    return () => subscription.unsubscribe();
   }, []);
 
   return (
