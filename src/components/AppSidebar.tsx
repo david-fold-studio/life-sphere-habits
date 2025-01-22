@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -64,15 +65,19 @@ export function AppSidebar({ className }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar className={className}>
+    <Sidebar className={className} collapsible="icon">
       <SidebarContent className="flex flex-col h-full">
+        <SidebarRail />
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton 
+                    asChild 
+                    tooltip={item.title}
+                  >
                     <Link 
                       to={item.url}
                       data-active={location.pathname === item.url}
@@ -92,7 +97,10 @@ export function AppSidebar({ className }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={handleLogout}>
+                  <SidebarMenuButton 
+                    onClick={handleLogout}
+                    tooltip="Logout"
+                  >
                     <LogOut />
                     <span>Logout</span>
                   </SidebarMenuButton>
