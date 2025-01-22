@@ -5,6 +5,7 @@ import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarWeekHeader } from "@/components/CalendarWeekHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { useCalendar } from "@/hooks/useCalendar";
+import { TitleBar } from "@/components/TitleBar";
 
 export default function CalendarView() {
   const { user } = useAuth();
@@ -34,6 +35,10 @@ export default function CalendarView() {
 
   return (
     <div className="flex h-screen flex-col">
+      <TitleBar 
+        title="Calendar" 
+        description="Manage your schedule and recurring habits"
+      />
       <div className="flex-none p-8 pb-0">
         <CalendarHeader
           weekStart={currentWeekStart}
