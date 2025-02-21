@@ -1,5 +1,6 @@
+
 import { Card } from "@/components/ui/card";
-import { useState, memo, useEffect } from "react";
+import { useState, memo, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { EventEditForm } from "./calendar/EventEditForm";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
@@ -41,6 +42,9 @@ export const CalendarEvent = memo(function CalendarEvent({
   const [visualStartTime, setVisualStartTime] = useState(startTime);
   const [visualEndTime, setVisualEndTime] = useState(endTime);
   const [visualDay, setVisualDay] = useState(day);
+  const mouseDownTime = useRef<number>(0);
+  const dragDistance = useRef<number>(0);
+  const startPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const {
     isDragging,
@@ -106,12 +110,21 @@ export const CalendarEvent = memo(function CalendarEvent({
     
     const target = e.target as HTMLElement;
     if (!target.closest('.resize-handle')) {
+      mouseDownTime.current = Date.now();
+      startPosition.current = { x: e.clientX, y: e.clientY };
+      dragDistance.current = 0;
       handleMouseDown(e);
     }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    if (!isDragging) {
+    const timeSinceMouseDown = Date.now() - mouseDownTime.current;
+    const dx = Math.abs(e.clientX - startPosition.current.x);
+    const dy = Math.abs(e.clientY - startPosition.current.y);
+    dragDistance.current = Math.sqrt(dx * dx + dy * dy);
+
+    // Only open form if it was a genuine click (short duration and minimal movement)
+    if (timeSinceMouseDown < 200 && dragDistance.current < 5 && !isDragging) {
       setFormOpen(true);
     }
   };
