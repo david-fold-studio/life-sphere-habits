@@ -57,9 +57,7 @@ export const CalendarEvent = memo(function CalendarEvent({
     day,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
-      if (sphere === 'google-calendar') {
-        onEventUpdate?.(id, newStartTime, newEndTime);
-      } else if (isRecurring) {
+      if (isRecurring || sphere === 'google-calendar') {
         setVisualStartTime(newStartTime);
         setVisualEndTime(newEndTime);
         setUpdateDialogOpen(true);
