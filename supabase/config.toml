@@ -1,3 +1,4 @@
+
 project_id = "yrrnprfymzagkxcwycrk"
 
 [api]
@@ -25,10 +26,14 @@ enabled = true
 [realtime]
 enabled = true
 
-[[functions]]
 [functions.google-calendar-auth]
 verify_jwt = false
 
-[[functions]]
 [functions.google-calendar-callback]
+verify_jwt = false
+
+[functions.google-calendar-refresh]
+verify_jwt = false
+
+[functions.google-calendar-update]
 verify_jwt = false
