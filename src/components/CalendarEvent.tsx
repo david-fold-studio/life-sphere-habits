@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useState, memo, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -44,6 +45,7 @@ export const CalendarEvent = memo(function CalendarEvent({
   const mouseDownTime = useRef<number>(0);
   const dragDistance = useRef<number>(0);
   const startPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pendingUpdate = useRef<{ startTime: string; endTime: string } | null>(null);
 
   const {
     isDragging,
@@ -57,9 +59,10 @@ export const CalendarEvent = memo(function CalendarEvent({
     day,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
-      if (isRecurring || sphere === 'google-calendar') {
+      if (isRecurring || (sphere === 'google-calendar' && frequency)) {
         setVisualStartTime(newStartTime);
         setVisualEndTime(newEndTime);
+        pendingUpdate.current = { startTime: newStartTime, endTime: newEndTime };
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
         onEventUpdate(id, newStartTime, newEndTime);
@@ -122,7 +125,6 @@ export const CalendarEvent = memo(function CalendarEvent({
     const dy = Math.abs(e.clientY - startPosition.current.y);
     dragDistance.current = Math.sqrt(dx * dx + dy * dy);
 
-    // Only open form if it was a genuine click (short duration and minimal movement)
     if (timeSinceMouseDown < 200 && dragDistance.current < 5 && !isDragging) {
       setFormOpen(true);
     }
@@ -136,7 +138,13 @@ export const CalendarEvent = memo(function CalendarEvent({
     frequency: string | null;
     invitees: string[];
   }) => {
-    if (onEventUpdate) {
+    if (isRecurring || (sphere === 'google-calendar' && frequency)) {
+      setVisualStartTime(data.startTime);
+      setVisualEndTime(data.endTime);
+      pendingUpdate.current = { startTime: data.startTime, endTime: data.endTime };
+      setUpdateDialogOpen(true);
+      setFormOpen(false);
+    } else if (onEventUpdate) {
       onEventUpdate(id, data.startTime, data.endTime);
       setFormOpen(false);
     }
@@ -179,20 +187,25 @@ export const CalendarEvent = memo(function CalendarEvent({
         </DialogContent>
       </Dialog>
 
-      {(isRecurring || hasInvitees) && (
-        <EventUpdateDialog
-          open={updateDialogOpen}
-          onOpenChange={setUpdateDialogOpen}
-          isRecurring={isRecurring}
-          hasInvitees={hasInvitees}
-          onUpdate={(updateType, notifyInvitees) => {
-            if (onEventUpdate) {
-              onEventUpdate(id, visualStartTime, visualEndTime, updateType, notifyInvitees);
-            }
-            setUpdateDialogOpen(false);
-          }}
-        />
-      )}
+      {<EventUpdateDialog
+        open={updateDialogOpen}
+        onOpenChange={setUpdateDialogOpen}
+        isRecurring={isRecurring || (sphere === 'google-calendar' && !!frequency)}
+        hasInvitees={hasInvitees}
+        onUpdate={(updateType, notifyInvitees) => {
+          if (pendingUpdate.current && onEventUpdate) {
+            onEventUpdate(
+              id, 
+              pendingUpdate.current.startTime, 
+              pendingUpdate.current.endTime,
+              updateType,
+              notifyInvitees
+            );
+            pendingUpdate.current = null;
+          }
+          setUpdateDialogOpen(false);
+        }}
+      />}
     </>
   );
 });
