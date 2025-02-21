@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { useState, memo, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -19,7 +18,7 @@ interface CalendarEventProps {
   frequency?: string | null;
   hasInvitees?: boolean;
   isOwner?: boolean;
-  onEventUpdate?: (id: string, startTime: string, endTime: string, updateType?: 'single' | 'series', notifyInvitees?: boolean) => void;
+  onEventUpdate?: (id: string, startTime: string, endTime: string, updateType?: 'single' | 'following' | 'series', notifyInvitees?: boolean) => void;
   onEventDelete?: (id: string) => void;
 }
 
@@ -60,7 +59,9 @@ export const CalendarEvent = memo(function CalendarEvent({
     onEventUpdate: (id, newStartTime, newEndTime) => {
       if (sphere === 'google-calendar') {
         onEventUpdate?.(id, newStartTime, newEndTime);
-      } else if (isRecurring || hasInvitees) {
+      } else if (isRecurring) {
+        setVisualStartTime(newStartTime);
+        setVisualEndTime(newEndTime);
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
         onEventUpdate(id, newStartTime, newEndTime);

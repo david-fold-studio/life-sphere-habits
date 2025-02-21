@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { startOfWeek, addDays } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
@@ -23,12 +22,18 @@ export const useCalendar = (userId: string | undefined) => {
     enabled: !!userId
   });
 
-  const handleEventUpdate = async (id: string, startTime: string, endTime: string, newDay?: number) => {
+  const handleEventUpdate = async (
+    id: string, 
+    startTime: string, 
+    endTime: string, 
+    updateType: 'single' | 'following' | 'series' = 'single',
+    notifyInvitees: boolean = false
+  ) => {
     try {
       const isGoogleEvent = !id.includes('-');
       
       if (isGoogleEvent) {
-        console.log('Updating Google Calendar event:', { id, startTime, endTime, newDay });
+        console.log('Updating Google Calendar event:', { id, startTime, endTime, updateType, notifyInvitees });
         
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
@@ -40,13 +45,13 @@ export const useCalendar = (userId: string | undefined) => {
             date: currentWeekStart.toISOString(),
             user_id: userId,
             timeZone: userTimeZone,
-            newDay
+            updateType,
+            notifyInvitees
           }
         });
 
         if (error) throw error;
         
-        // Refetch Google Calendar events
         await refetchGoogleEvents();
 
         toast({
@@ -63,13 +68,12 @@ export const useCalendar = (userId: string | undefined) => {
           .update({ 
             starttime: startTime, 
             endtime: endTime,
-            day: newDay !== undefined ? newDay : undefined
+            update_type: updateType
           })
           .eq('id', id);
 
         if (error) throw error;
         
-        // Refetch scheduled habits
         await refetchHabits();
 
         toast({
@@ -85,7 +89,6 @@ export const useCalendar = (userId: string | undefined) => {
         variant: "destructive",
       });
       
-      // Refetch all events to ensure UI is in sync with server
       await Promise.all([refetchHabits(), refetchGoogleEvents()]);
     }
   };
@@ -99,7 +102,6 @@ export const useCalendar = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      // Refetch scheduled habits after deletion
       await refetchHabits();
 
       toast({
@@ -114,7 +116,6 @@ export const useCalendar = (userId: string | undefined) => {
         variant: "destructive",
       });
       
-      // Refetch to ensure UI is in sync
       await refetchHabits();
     }
   };

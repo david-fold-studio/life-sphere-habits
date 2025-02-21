@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -6,7 +7,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
 interface EventUpdateDialogProps {
@@ -14,73 +16,59 @@ interface EventUpdateDialogProps {
   onOpenChange: (open: boolean) => void;
   isRecurring: boolean;
   hasInvitees: boolean;
-  onUpdate: (updateType: 'single' | 'series', notifyInvitees: boolean) => void;
+  onUpdate: (updateType: 'single' | 'following' | 'series', notifyInvitees: boolean) => void;
 }
 
 export function EventUpdateDialog({
   open,
   onOpenChange,
   isRecurring,
-  hasInvitees,
   onUpdate,
 }: EventUpdateDialogProps) {
-  const [updateType, setUpdateType] = useState<'single' | 'series'>('single');
-  const [notifyInvitees, setNotifyInvitees] = useState(true);
+  const [updateType, setUpdateType] = useState<'single' | 'following' | 'series'>('single');
 
   const handleUpdate = () => {
-    onUpdate(updateType, notifyInvitees);
+    onUpdate(updateType, false);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Update Event</DialogTitle>
+          <DialogTitle className="text-xl font-normal">Edit recurring event</DialogTitle>
         </DialogHeader>
-        <div className="py-4 space-y-4">
-          {isRecurring && (
-            <div className="space-y-2">
-              <h4 className="font-medium">This is a recurring event</h4>
-              <div className="space-x-4">
-                <Button
-                  variant={updateType === 'single' ? 'default' : 'outline'}
-                  onClick={() => setUpdateType('single')}
-                >
-                  This occurrence
-                </Button>
-                <Button
-                  variant={updateType === 'series' ? 'default' : 'outline'}
-                  onClick={() => setUpdateType('series')}
-                >
-                  All occurrences
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          {hasInvitees && (
+        <div className="py-6">
+          <RadioGroup
+            value={updateType}
+            onValueChange={(value: 'single' | 'following' | 'series') => setUpdateType(value)}
+            className="space-y-4"
+          >
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="notify"
-                checked={notifyInvitees}
-                onCheckedChange={(checked) => setNotifyInvitees(checked as boolean)}
-              />
-              <label
-                htmlFor="notify"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Notify invitees
-              </label>
+              <RadioGroupItem value="single" id="single" />
+              <Label htmlFor="single" className="font-normal text-base">This event</Label>
             </div>
-          )}
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="following" id="following" />
+              <Label htmlFor="following" className="font-normal text-base">This and following events</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="series" id="series" />
+              <Label htmlFor="series" className="font-normal text-base">All events</Label>
+            </div>
+          </RadioGroup>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="sm:justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button onClick={handleUpdate}>
-            Update
+          <Button 
+            onClick={handleUpdate}
+          >
+            OK
           </Button>
         </DialogFooter>
       </DialogContent>
