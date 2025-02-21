@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
@@ -6,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthError, AuthApiError } from "@supabase/supabase-js";
+import { TitleBar } from "@/components/TitleBar";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -82,38 +84,39 @@ const Auth = () => {
   };
 
   return (
-    <div className="container mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center p-4">
-      <div className="w-full space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to your account to continue</p>
-        </div>
-        
-        {errorMessage && (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
+    <div className="flex min-h-screen flex-col">
+      <TitleBar 
+        title="Welcome Back" 
+        description="Sign in to your account to continue" 
+      />
+      <div className="flex flex-1 items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-6">
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
 
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <SupabaseAuth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(var(--primary))',
-                    brandAccent: 'rgb(var(--primary))',
+          <div className="rounded-lg border bg-card p-6 shadow-sm">
+            <SupabaseAuth
+              supabaseClient={supabase}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'rgb(var(--primary))',
+                      brandAccent: 'rgb(var(--primary))',
+                    },
                   },
                 },
-              },
-            }}
-            providers={[]} // Removed 'google' from providers array
-            view="sign_in"
-            showLinks={true}
-            redirectTo={window.location.origin}
-          />
+              }}
+              providers={[]}
+              view="sign_in"
+              showLinks={true}
+              redirectTo={window.location.origin}
+            />
+          </div>
         </div>
       </div>
     </div>
