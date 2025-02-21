@@ -59,7 +59,8 @@ export const CalendarEvent = memo(function CalendarEvent({
     day,
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
-      if (isRecurring || (sphere === 'google-calendar' && frequency)) {
+      if (isRecurring || sphere === 'google-calendar') {
+        console.log('Setting pending update:', { newStartTime, newEndTime });
         setVisualStartTime(newStartTime);
         setVisualEndTime(newEndTime);
         pendingUpdate.current = { startTime: newStartTime, endTime: newEndTime };
@@ -138,7 +139,8 @@ export const CalendarEvent = memo(function CalendarEvent({
     frequency: string | null;
     invitees: string[];
   }) => {
-    if (isRecurring || (sphere === 'google-calendar' && frequency)) {
+    if (isRecurring || sphere === 'google-calendar') {
+      console.log('Setting pending update from save:', { startTime: data.startTime, endTime: data.endTime });
       setVisualStartTime(data.startTime);
       setVisualEndTime(data.endTime);
       pendingUpdate.current = { startTime: data.startTime, endTime: data.endTime };
@@ -165,7 +167,7 @@ export const CalendarEvent = memo(function CalendarEvent({
         {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
         <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
           {name}
-          {isRecurring && <span className="ml-1">🔄</span>}
+          {(isRecurring || (sphere === 'google-calendar' && frequency)) && <span className="ml-1">🔄</span>}
         </div>
       </Card>
 
@@ -187,13 +189,26 @@ export const CalendarEvent = memo(function CalendarEvent({
         </DialogContent>
       </Dialog>
 
-      {<EventUpdateDialog
+      <EventUpdateDialog
         open={updateDialogOpen}
-        onOpenChange={setUpdateDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && pendingUpdate.current === null) {
+            // Reset visual state if dialog is closed without confirming
+            setVisualStartTime(startTime);
+            setVisualEndTime(endTime);
+            setVisualDay(day);
+          }
+          setUpdateDialogOpen(open);
+        }}
         isRecurring={isRecurring || (sphere === 'google-calendar' && !!frequency)}
         hasInvitees={hasInvitees}
         onUpdate={(updateType, notifyInvitees) => {
           if (pendingUpdate.current && onEventUpdate) {
+            console.log('Confirming update:', { 
+              startTime: pendingUpdate.current.startTime, 
+              endTime: pendingUpdate.current.endTime,
+              updateType
+            });
             onEventUpdate(
               id, 
               pendingUpdate.current.startTime, 
@@ -205,7 +220,7 @@ export const CalendarEvent = memo(function CalendarEvent({
           }
           setUpdateDialogOpen(false);
         }}
-      />}
+      />
     </>
   );
 });
