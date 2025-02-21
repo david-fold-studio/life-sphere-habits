@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { startOfWeek, addDays } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +23,7 @@ export const useCalendar = (userId: string | undefined) => {
     enabled: !!userId
   });
 
-  const handleEventUpdate = async (id: string, startTime: string, endTime: string, newDay?: number, updateType: 'single' | 'series' = 'single', notifyInvitees: boolean = false) => {
+  const handleEventUpdate = async (id: string, startTime: string, endTime: string, newDay?: number) => {
     try {
       const isGoogleEvent = !id.includes('-');
       
@@ -45,7 +46,8 @@ export const useCalendar = (userId: string | undefined) => {
 
         if (error) throw error;
         
-        refetchGoogleEvents();
+        // Refetch Google Calendar events
+        await refetchGoogleEvents();
 
         toast({
           title: "Event updated",
@@ -66,7 +68,9 @@ export const useCalendar = (userId: string | undefined) => {
           .eq('id', id);
 
         if (error) throw error;
-        refetchHabits();
+        
+        // Refetch scheduled habits
+        await refetchHabits();
 
         toast({
           title: "Event updated",
@@ -80,6 +84,9 @@ export const useCalendar = (userId: string | undefined) => {
         description: "Failed to update the event time.",
         variant: "destructive",
       });
+      
+      // Refetch all events to ensure UI is in sync with server
+      await Promise.all([refetchHabits(), refetchGoogleEvents()]);
     }
   };
 
@@ -92,7 +99,8 @@ export const useCalendar = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      refetchHabits();
+      // Refetch scheduled habits after deletion
+      await refetchHabits();
 
       toast({
         title: "Event deleted",
@@ -105,6 +113,9 @@ export const useCalendar = (userId: string | undefined) => {
         description: "Failed to delete the event.",
         variant: "destructive",
       });
+      
+      // Refetch to ensure UI is in sync
+      await refetchHabits();
     }
   };
 

@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { calculateNewTimes, calculateResizeTime } from "./EventDragLogic";
 import { useToast } from "@/hooks/use-toast";
