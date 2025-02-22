@@ -60,7 +60,6 @@ export const CalendarEvent = memo(function CalendarEvent({
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
       if (isRecurring || sphere === 'google-calendar') {
-        console.log('Setting pending update:', { newStartTime, newEndTime });
         setVisualStartTime(newStartTime);
         setVisualEndTime(newEndTime);
         pendingUpdate.current = { startTime: newStartTime, endTime: newEndTime };
@@ -70,6 +69,14 @@ export const CalendarEvent = memo(function CalendarEvent({
       }
     }
   });
+
+  // Reset visual state when props change
+  useEffect(() => {
+    setVisualStartTime(startTime);
+    setVisualEndTime(endTime);
+    setVisualDay(day);
+    pendingUpdate.current = null;
+  }, [startTime, endTime, day]);
 
   useEffect(() => {
     const handleVisualUpdate = (e: CustomEvent<{ 
@@ -90,12 +97,6 @@ export const CalendarEvent = memo(function CalendarEvent({
       document.removeEventListener('visualTimeUpdate', handleVisualUpdate as EventListener);
     };
   }, [id]);
-
-  useEffect(() => {
-    setVisualStartTime(startTime);
-    setVisualEndTime(endTime);
-    setVisualDay(day);
-  }, [startTime, endTime, day]);
 
   const [startHours, startMinutes] = visualStartTime.split(":").map(Number);
   const [endHours, endMinutes] = visualEndTime.split(":").map(Number);
@@ -140,7 +141,6 @@ export const CalendarEvent = memo(function CalendarEvent({
     invitees: string[];
   }) => {
     if (isRecurring || sphere === 'google-calendar') {
-      console.log('Setting pending update from save:', { startTime: data.startTime, endTime: data.endTime });
       setVisualStartTime(data.startTime);
       setVisualEndTime(data.endTime);
       pendingUpdate.current = { startTime: data.startTime, endTime: data.endTime };
@@ -192,11 +192,12 @@ export const CalendarEvent = memo(function CalendarEvent({
       <EventUpdateDialog
         open={updateDialogOpen}
         onOpenChange={(open) => {
-          if (!open && pendingUpdate.current === null) {
+          if (!open && pendingUpdate.current) {
             // Reset visual state if dialog is closed without confirming
             setVisualStartTime(startTime);
             setVisualEndTime(endTime);
             setVisualDay(day);
+            pendingUpdate.current = null;
           }
           setUpdateDialogOpen(open);
         }}
@@ -204,11 +205,6 @@ export const CalendarEvent = memo(function CalendarEvent({
         hasInvitees={hasInvitees}
         onUpdate={(updateType, notifyInvitees) => {
           if (pendingUpdate.current && onEventUpdate) {
-            console.log('Confirming update:', { 
-              startTime: pendingUpdate.current.startTime, 
-              endTime: pendingUpdate.current.endTime,
-              updateType
-            });
             onEventUpdate(
               id, 
               pendingUpdate.current.startTime, 

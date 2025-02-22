@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { startOfWeek, addDays } from 'date-fns';
+import { startOfWeek } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +38,7 @@ export const useCalendar = (userId: string | undefined) => {
         
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         
-        const { error } = await supabase.functions.invoke('google-calendar-update', {
+        const { data, error } = await supabase.functions.invoke('google-calendar-update', {
           body: { 
             eventId: id,
             startTime,
@@ -51,9 +52,10 @@ export const useCalendar = (userId: string | undefined) => {
         });
 
         if (error) throw error;
-        
-        await refetchGoogleEvents();
 
+        // Force refetch to get the updated events, including any new exception events
+        await refetchGoogleEvents();
+        
         toast({
           title: "Event updated",
           description: "The event has been updated in Google Calendar.",
@@ -89,6 +91,7 @@ export const useCalendar = (userId: string | undefined) => {
         variant: "destructive",
       });
       
+      // Refetch to ensure UI is in sync with server state
       await Promise.all([refetchHabits(), refetchGoogleEvents()]);
     }
   };
