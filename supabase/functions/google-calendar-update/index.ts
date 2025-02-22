@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -63,33 +62,38 @@ serve(async (req) => {
     const eventDetails = await getResponse.json();
     console.log('Original event details:', eventDetails);
 
-    // Parse the base date and create time slots
-    const baseDate = new Date(date);
+    // Parse the input date and times
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    // Create dates in the user's time zone
-    const startDateTime = new Date(baseDate);
-    startDateTime.setHours(startHour, startMinute, 0);
+    let updateEndpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
+    let method = 'PATCH';
+    
+    // For single instance exceptions, work with the correct instance date
+    const baseDate = updateType === 'single' && eventDetails.recurrence
+      ? new Date(eventDetails.start.dateTime) // Use original event's date
+      : new Date(date); // Use provided date for non-recurring events
 
-    const endDateTime = new Date(baseDate);
-    endDateTime.setHours(endHour, endMinute, 0);
+    // Create the new start and end times
+    const newStartDateTime = new Date(baseDate);
+    newStartDateTime.setHours(startHour, startMinute, 0);
+
+    const newEndDateTime = new Date(baseDate);
+    newEndDateTime.setHours(endHour, endMinute, 0);
 
     console.log('Creating event times:', {
-      startDateTime: startDateTime.toISOString(),
-      endDateTime: endDateTime.toISOString(),
+      newStartDateTime: newStartDateTime.toISOString(),
+      newEndDateTime: newEndDateTime.toISOString(),
       timeZone
     });
 
-    let updateEndpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
-    let method = 'PATCH';
     let updateBody: any = {
       start: {
-        dateTime: startDateTime.toISOString(),
+        dateTime: newStartDateTime.toISOString(),
         timeZone: timeZone,
       },
       end: {
-        dateTime: endDateTime.toISOString(),
+        dateTime: newEndDateTime.toISOString(),
         timeZone: timeZone,
       },
     };
@@ -98,16 +102,11 @@ serve(async (req) => {
     if (eventDetails.recurrence) {
       if (updateType === 'single') {
         console.log('Creating single instance exception');
-        method = 'POST';  // Use POST to create a new instance
+        method = 'POST';
         updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-        
-        // For single instance updates, we need to:
-        // 1. Copy all relevant event details
-        // 2. Set the originalStartTime using the event's original date but with current instance's time
+
+        // Keep the original date but update the time
         const originalStartDate = new Date(eventDetails.start.dateTime);
-        const currentDate = new Date(date);
-        originalStartDate.setFullYear(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-        
         updateBody = {
           ...updateBody,
           originalStartTime: {
@@ -116,25 +115,25 @@ serve(async (req) => {
           },
           recurringEventId: eventId,
           summary: eventDetails.summary,
-          status: "confirmed",
-          attendees: eventDetails.attendees,
           description: eventDetails.description,
           location: eventDetails.location,
+          status: "confirmed",
+          attendees: eventDetails.attendees,
           reminders: eventDetails.reminders,
         };
       } else if (updateType === 'following') {
-        // For this and following, update the recurrence rule
-        const eventDate = new Date(date);
-        eventDate.setDate(eventDate.getDate() - 1);
-        const untilDate = eventDate.toISOString().split('T')[0].replace(/-/g, '');
+        // For "this and following", update the recurrence rule
+        const untilDate = new Date(baseDate);
+        untilDate.setDate(untilDate.getDate() - 1);
+        const untilDateStr = untilDate.toISOString().split('T')[0].replace(/-/g, '');
         
         if (eventDetails.recurrence && eventDetails.recurrence[0]) {
-          const originalRecurrenceRule = eventDetails.recurrence[0];
-          const updatedRecurrenceRule = originalRecurrenceRule.replace(/UNTIL=[^;]+/, `UNTIL=${untilDate}`);
-          updateBody.recurrence = [updatedRecurrenceRule];
+          const originalRule = eventDetails.recurrence[0];
+          const updatedRule = originalRule.replace(/;?UNTIL=[^;]+/, `UNTIL=${untilDateStr}`);
+          updateBody.recurrence = [updatedRule];
         }
       }
-      // For 'series' type, we use the default PATCH behavior to update the entire series
+      // For 'series' type, we use the default PATCH behavior
     }
 
     // Add notification preference
