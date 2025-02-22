@@ -63,7 +63,7 @@ serve(async (req) => {
     const eventDetails = await getResponse.json();
     console.log('Original event details:', eventDetails);
 
-    // Parse the base date
+    // Parse the base date and create time slots
     const baseDate = new Date(date);
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
@@ -101,9 +101,19 @@ serve(async (req) => {
         method = 'POST';  // Use POST to create a new instance
         updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
         
+        // For single instance updates, we need to:
+        // 1. Copy all relevant event details
+        // 2. Set the originalStartTime using the event's original date but with current instance's time
+        const originalStartDate = new Date(eventDetails.start.dateTime);
+        const currentDate = new Date(date);
+        originalStartDate.setFullYear(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+        
         updateBody = {
           ...updateBody,
-          originalStartTime: eventDetails.start,
+          originalStartTime: {
+            dateTime: originalStartDate.toISOString(),
+            timeZone: timeZone,
+          },
           recurringEventId: eventId,
           summary: eventDetails.summary,
           status: "confirmed",
@@ -183,4 +193,3 @@ const createClient = (supabaseUrl: string, supabaseKey: string) => {
     }),
   };
 };
-
