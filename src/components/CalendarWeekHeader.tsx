@@ -1,4 +1,5 @@
-import { format } from "date-fns";
+
+import { format, isToday } from "date-fns";
 
 interface CalendarWeekHeaderProps {
   weekDays: Array<{
@@ -17,9 +18,13 @@ export function CalendarWeekHeader({ weekDays }: CalendarWeekHeaderProps) {
         {weekDays.map(({ date, dayIndex }) => (
           <div key={dayIndex} className="flex-1 border-l first:border-l-0">
             <div className="h-16 border-b p-2 text-center bg-white relative z-50">
-              <div className="font-semibold">{format(date, "EEE")}</div>
-              <div className="text-sm text-muted-foreground">
-                {format(date, "MMM d")}
+              <div className={`font-semibold ${isToday(date) ? 'text-white' : ''}`}>
+                <div className={`inline-flex flex-col items-center justify-center rounded-full ${
+                  isToday(date) ? 'bg-black' : ''
+                } ${isToday(date) ? 'p-2' : ''}`}>
+                  <span>{format(date, "EEE")}</span>
+                  <span className="text-sm">{format(date, "MMM d")}</span>
+                </div>
               </div>
             </div>
           </div>
