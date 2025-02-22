@@ -1,3 +1,4 @@
+
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -101,8 +102,6 @@ export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date)
     const timeMin = format(weekStart, "yyyy-MM-dd'T'00:00:00'Z'");
     const timeMax = format(addDays(weekStart, 7), "yyyy-MM-dd'T'00:00:00'Z'");
 
-    console.log('Making request with token:', accessToken);
-    
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}`,
       {
@@ -122,7 +121,25 @@ export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date)
     const data = await response.json();
     console.log('Google Calendar events:', data);
 
-    return data.items.map((event: any) => {
+    // Create a map to track recurring events and their exceptions
+    const eventMap = new Map();
+
+    // First pass: Identify recurring events and their exceptions
+    data.items.forEach((event: any) => {
+      const recurring_event_id = event.recurringEventId;
+      const isException = event.originalStartTime;
+
+      if (recurring_event_id && isException) {
+        // This is an exception to a recurring event
+        eventMap.set(event.id, event);
+      } else if (!recurring_event_id) {
+        // This is either a single event or the original recurring event
+        eventMap.set(event.id, event);
+      }
+    });
+
+    // Convert events to our format, only using events in the map
+    return Array.from(eventMap.values()).map((event: any) => {
       const startDate = new Date(event.start.dateTime || event.start.date);
       return {
         id: event.id,
