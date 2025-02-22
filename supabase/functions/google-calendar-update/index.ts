@@ -45,30 +45,7 @@ serve(async (req) => {
       throw new Error('Failed to get calendar token')
     }
 
-    // Parse the date and times to create proper ISO strings
-    const [year, month, day] = new Date(date).toISOString().split('T')[0].split('-')
-    const [startHour, startMinute] = startTime.split(':')
-    const [endHour, endMinute] = endTime.split(':')
-
-    const startDateTime = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(startHour),
-      Number(startMinute)
-    ).toISOString()
-
-    const endDateTime = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(endHour),
-      Number(endMinute)
-    ).toISOString()
-
-    console.log('Calculated datetime:', { startDateTime, endDateTime });
-
-    // Get the current event to check if it's recurring
+    // Get the original event to check its details
     const getResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
       {
@@ -84,17 +61,35 @@ serve(async (req) => {
     }
 
     const eventDetails = await getResponse.json();
-    console.log('Event details:', eventDetails);
+    console.log('Original event details:', eventDetails);
+
+    // Parse the base date
+    const baseDate = new Date(date);
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    // Create dates in the user's time zone
+    const startDateTime = new Date(baseDate);
+    startDateTime.setHours(startHour, startMinute, 0);
+
+    const endDateTime = new Date(baseDate);
+    endDateTime.setHours(endHour, endMinute, 0);
+
+    console.log('Creating event times:', {
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+      timeZone
+    });
 
     let updateEndpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
     let method = 'PATCH';
     let updateBody: any = {
       start: {
-        dateTime: startDateTime,
+        dateTime: startDateTime.toISOString(),
         timeZone: timeZone,
       },
       end: {
-        dateTime: endDateTime,
+        dateTime: endDateTime.toISOString(),
         timeZone: timeZone,
       },
     };
@@ -103,7 +98,6 @@ serve(async (req) => {
     if (eventDetails.recurrence) {
       if (updateType === 'single') {
         console.log('Creating single instance exception');
-        // For single instance update, create a new exception event
         method = 'POST';  // Use POST to create a new instance
         updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
         
@@ -111,8 +105,12 @@ serve(async (req) => {
           ...updateBody,
           originalStartTime: eventDetails.start,
           recurringEventId: eventId,
-          status: "confirmed",
           summary: eventDetails.summary,
+          status: "confirmed",
+          attendees: eventDetails.attendees,
+          description: eventDetails.description,
+          location: eventDetails.location,
+          reminders: eventDetails.reminders,
         };
       } else if (updateType === 'following') {
         // For this and following, update the recurrence rule
@@ -132,7 +130,7 @@ serve(async (req) => {
     // Add notification preference
     updateBody.sendUpdates = notifyInvitees ? 'all' : 'none';
 
-    console.log('Update request:', {
+    console.log('Making calendar API request:', {
       method,
       endpoint: updateEndpoint,
       body: updateBody
@@ -185,3 +183,4 @@ const createClient = (supabaseUrl: string, supabaseKey: string) => {
     }),
   };
 };
+
