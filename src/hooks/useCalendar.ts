@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { startOfWeek } from 'date-fns';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchGoogleCalendarEvents, fetchScheduledHabits } from '@/utils/calendarUtils';
@@ -10,17 +10,21 @@ import type { ScheduledHabit } from '@/utils/calendarUtils';
 export const useCalendar = (userId: string | undefined) => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: scheduledHabits = [], isLoading: habitsLoading, refetch: refetchHabits } = useQuery({
     queryKey: ["scheduledHabits", userId],
     queryFn: () => fetchScheduledHabits(userId || ""),
-    enabled: !!userId
+    enabled: !!userId,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: googleEvents = [], isLoading: eventsLoading, refetch: refetchGoogleEvents } = useQuery({
     queryKey: ["googleCalendarEvents", userId, currentWeekStart],
     queryFn: () => fetchGoogleCalendarEvents(userId || "", currentWeekStart),
-    enabled: !!userId
+    enabled: !!userId,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   const handleEventUpdate = async (
@@ -53,7 +57,9 @@ export const useCalendar = (userId: string | undefined) => {
 
         if (error) throw error;
 
-        // Force refetch to get the updated events, including any new exception events
+        // Invalidate entire query cache for Google events
+        await queryClient.invalidateQueries({ queryKey: ["googleCalendarEvents"] });
+        // Force refetch to get the updated events
         await refetchGoogleEvents();
         
         toast({
@@ -76,6 +82,8 @@ export const useCalendar = (userId: string | undefined) => {
 
         if (error) throw error;
         
+        // Invalidate entire query cache for scheduled habits
+        await queryClient.invalidateQueries({ queryKey: ["scheduledHabits"] });
         await refetchHabits();
 
         toast({
@@ -91,8 +99,13 @@ export const useCalendar = (userId: string | undefined) => {
         variant: "destructive",
       });
       
-      // Refetch to ensure UI is in sync with server state
-      await Promise.all([refetchHabits(), refetchGoogleEvents()]);
+      // Force refetch to ensure UI is in sync with server state
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["scheduledHabits"] }),
+        queryClient.invalidateQueries({ queryKey: ["googleCalendarEvents"] }),
+        refetchHabits(),
+        refetchGoogleEvents()
+      ]);
     }
   };
 
@@ -105,6 +118,7 @@ export const useCalendar = (userId: string | undefined) => {
 
       if (error) throw error;
 
+      await queryClient.invalidateQueries({ queryKey: ["scheduledHabits"] });
       await refetchHabits();
 
       toast({
@@ -119,6 +133,7 @@ export const useCalendar = (userId: string | undefined) => {
         variant: "destructive",
       });
       
+      await queryClient.invalidateQueries({ queryKey: ["scheduledHabits"] });
       await refetchHabits();
     }
   };
