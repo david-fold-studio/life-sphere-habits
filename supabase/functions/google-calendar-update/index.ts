@@ -32,7 +32,6 @@ serve(async (req) => {
       timeZone
     });
 
-    // Get the user's calendar token
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject()
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
@@ -88,6 +87,7 @@ serve(async (req) => {
     console.log('Event details:', eventDetails);
 
     let updateEndpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`;
+    let method = 'PATCH';
     let updateBody: any = {
       start: {
         dateTime: startDateTime,
@@ -102,58 +102,71 @@ serve(async (req) => {
     // Handle different update types for recurring events
     if (eventDetails.recurrence) {
       if (updateType === 'single') {
-        // For single instance update, create a new exception
-        updateEndpoint = `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}/instances/${eventDetails.id}`;
+        console.log('Creating single instance exception');
+        // For single instance update, create a new exception event
+        method = 'POST';  // Use POST to create a new instance
+        updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+        
+        updateBody = {
+          ...updateBody,
+          originalStartTime: eventDetails.start,
+          recurringEventId: eventId,
+          status: "confirmed",
+          summary: eventDetails.summary,
+        };
       } else if (updateType === 'following') {
-        // For this and following, set the recurrence until the day before
+        // For this and following, update the recurrence rule
         const eventDate = new Date(date);
         eventDate.setDate(eventDate.getDate() - 1);
         const untilDate = eventDate.toISOString().split('T')[0].replace(/-/g, '');
         
-        // Update the original event's recurrence rule
-        const originalRecurrenceRule = eventDetails.recurrence[0];
-        const updatedRecurrenceRule = originalRecurrenceRule.replace(/UNTIL=[^;]+/, `UNTIL=${untilDate}`);
-        updateBody.recurrence = [updatedRecurrenceRule];
+        if (eventDetails.recurrence && eventDetails.recurrence[0]) {
+          const originalRecurrenceRule = eventDetails.recurrence[0];
+          const updatedRecurrenceRule = originalRecurrenceRule.replace(/UNTIL=[^;]+/, `UNTIL=${untilDate}`);
+          updateBody.recurrence = [updatedRecurrenceRule];
+        }
       }
+      // For 'series' type, we use the default PATCH behavior to update the entire series
     }
 
     // Add notification preference
     updateBody.sendUpdates = notifyInvitees ? 'all' : 'none';
 
     console.log('Update request:', {
+      method,
       endpoint: updateEndpoint,
       body: updateBody
     });
 
     const response = await fetch(updateEndpoint, {
-      method: 'PATCH',
+      method: method,
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(updateBody),
-    })
+    });
 
     if (!response.ok) {
-      const errorData = await response.json()
-      console.error('Google Calendar API error:', errorData)
-      throw new Error('Failed to update event')
+      const errorData = await response.json();
+      console.error('Google Calendar API error:', errorData);
+      throw new Error('Failed to update event');
     }
 
-    const data = await response.json()
+    const data = await response.json();
     console.log('Update response:', data);
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   }
-})
+});
 
 // Helper to create Supabase client
 const createClient = (supabaseUrl: string, supabaseKey: string) => {
@@ -170,5 +183,5 @@ const createClient = (supabaseUrl: string, supabaseKey: string) => {
         }),
       }),
     }),
-  }
-}
+  };
+};
