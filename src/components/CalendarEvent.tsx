@@ -1,12 +1,14 @@
 
+import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
-import { useState, memo, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { EventEditForm } from "./calendar/EventEditForm";
 import { calculateEventStyle } from "./calendar/EventDragLogic";
 import { useEventHandlers } from "./calendar/EventHandlers";
 import { EventResizeHandles } from "./calendar/EventResizeHandles";
 import { EventUpdateDialog } from "./calendar/EventUpdateDialog";
+import { EventContent } from "./calendar/EventContent";
+import { useEventVisualState } from "@/hooks/useEventVisualState";
 
 interface CalendarEventProps {
   id: string;
@@ -23,7 +25,7 @@ interface CalendarEventProps {
   onEventDelete?: (id: string) => void;
 }
 
-export const CalendarEvent = memo(function CalendarEvent({ 
+export const CalendarEvent = ({ 
   id, 
   name, 
   startTime, 
@@ -36,16 +38,20 @@ export const CalendarEvent = memo(function CalendarEvent({
   isOwner = true,
   onEventUpdate,
   onEventDelete 
-}: CalendarEventProps) {
+}: CalendarEventProps) => {
   const [formOpen, setFormOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
-  const [visualStartTime, setVisualStartTime] = useState(startTime);
-  const [visualEndTime, setVisualEndTime] = useState(endTime);
-  const [visualDay, setVisualDay] = useState(day);
   const mouseDownTime = useRef<number>(0);
   const dragDistance = useRef<number>(0);
   const startPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const pendingUpdate = useRef<{ startTime: string; endTime: string } | null>(null);
+
+  const { visualStartTime, visualEndTime, visualDay } = useEventVisualState({
+    startTime,
+    endTime,
+    day,
+    id
+  });
 
   const {
     isDragging,
@@ -60,8 +66,6 @@ export const CalendarEvent = memo(function CalendarEvent({
     isOwner,
     onEventUpdate: (id, newStartTime, newEndTime) => {
       if (isRecurring || sphere === 'google-calendar') {
-        setVisualStartTime(newStartTime);
-        setVisualEndTime(newEndTime);
         pendingUpdate.current = { startTime: newStartTime, endTime: newEndTime };
         setUpdateDialogOpen(true);
       } else if (onEventUpdate) {
@@ -70,44 +74,10 @@ export const CalendarEvent = memo(function CalendarEvent({
     }
   });
 
-  // Reset visual state when props change
-  useEffect(() => {
-    setVisualStartTime(startTime);
-    setVisualEndTime(endTime);
-    setVisualDay(day);
-    pendingUpdate.current = null;
-  }, [startTime, endTime, day]);
-
-  useEffect(() => {
-    const handleVisualUpdate = (e: CustomEvent<{ 
-      id: string; 
-      newStartTime: string; 
-      newEndTime: string;
-      newDay: number;
-    }>) => {
-      if (e.detail.id === id) {
-        setVisualStartTime(e.detail.newStartTime);
-        setVisualEndTime(e.detail.newEndTime);
-        setVisualDay(e.detail.newDay);
-      }
-    };
-
-    document.addEventListener('visualTimeUpdate', handleVisualUpdate as EventListener);
-    return () => {
-      document.removeEventListener('visualTimeUpdate', handleVisualUpdate as EventListener);
-    };
-  }, [id]);
-
   const [startHours, startMinutes] = visualStartTime.split(":").map(Number);
   const [endHours, endMinutes] = visualEndTime.split(":").map(Number);
   const durationInMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
   const shouldWrapText = durationInMinutes >= 30;
-
-  const backgroundColor = sphere === 'google-calendar' 
-    ? 'bg-blue-500 text-white' 
-    : `bg-[var(--sphere-${sphere})]`;
-
-  const cursor = isOwner ? (isDragging ? 'grabbing' : 'grab') : 'default';
 
   const handleCardMouseDown = (e: React.MouseEvent) => {
     if (!isOwner) return;
@@ -132,25 +102,11 @@ export const CalendarEvent = memo(function CalendarEvent({
     }
   };
 
-  const handleSave = (data: {
-    startTime: string;
-    endTime: string;
-    date: Date;
-    isRecurring: boolean;
-    frequency: string | null;
-    invitees: string[];
-  }) => {
-    if (isRecurring || sphere === 'google-calendar') {
-      setVisualStartTime(data.startTime);
-      setVisualEndTime(data.endTime);
-      pendingUpdate.current = { startTime: data.startTime, endTime: data.endTime };
-      setUpdateDialogOpen(true);
-      setFormOpen(false);
-    } else if (onEventUpdate) {
-      onEventUpdate(id, data.startTime, data.endTime);
-      setFormOpen(false);
-    }
-  };
+  const backgroundColor = sphere === 'google-calendar' 
+    ? 'bg-blue-500 text-white' 
+    : `bg-[var(--sphere-${sphere})]`;
+
+  const cursor = isOwner ? (isDragging ? 'grabbing' : 'grab') : 'default';
 
   return (
     <>
@@ -165,10 +121,13 @@ export const CalendarEvent = memo(function CalendarEvent({
         onClick={handleCardClick}
       >
         {isOwner && <EventResizeHandles onMouseDown={handleMouseDown} />}
-        <div className={`text-[10px] leading-[0.85] font-medium ${shouldWrapText ? 'whitespace-normal' : 'truncate'}`}>
-          {name}
-          {(isRecurring || (sphere === 'google-calendar' && frequency)) && <span className="ml-1">🔄</span>}
-        </div>
+        <EventContent 
+          name={name}
+          isRecurring={isRecurring}
+          sphere={sphere}
+          frequency={frequency}
+          shouldWrapText={shouldWrapText}
+        />
       </Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
@@ -183,7 +142,19 @@ export const CalendarEvent = memo(function CalendarEvent({
             frequency={frequency}
             sphere={sphere}
             invitees={[]}
-            onSave={handleSave}
+            onSave={(data) => {
+              if (isRecurring || sphere === 'google-calendar') {
+                pendingUpdate.current = { 
+                  startTime: data.startTime, 
+                  endTime: data.endTime 
+                };
+                setUpdateDialogOpen(true);
+                setFormOpen(false);
+              } else if (onEventUpdate) {
+                onEventUpdate(id, data.startTime, data.endTime);
+                setFormOpen(false);
+              }
+            }}
             onCancel={() => setFormOpen(false)}
           />
         </DialogContent>
@@ -193,10 +164,6 @@ export const CalendarEvent = memo(function CalendarEvent({
         open={updateDialogOpen}
         onOpenChange={(open) => {
           if (!open && pendingUpdate.current) {
-            // Reset visual state if dialog is closed without confirming
-            setVisualStartTime(startTime);
-            setVisualEndTime(endTime);
-            setVisualDay(day);
             pendingUpdate.current = null;
           }
           setUpdateDialogOpen(open);
@@ -219,4 +186,4 @@ export const CalendarEvent = memo(function CalendarEvent({
       />
     </>
   );
-});
+};
