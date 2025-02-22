@@ -63,7 +63,7 @@ serve(async (req) => {
     const eventDetails = await getResponse.json();
     console.log('Original event details:', eventDetails);
 
-    // Parse the input date and times, ensuring proper time zone handling
+    // Parse the input date and times
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
 
@@ -89,7 +89,7 @@ serve(async (req) => {
         method = 'POST';
         updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
         
-        // For single instance exception, include the original event time
+        // For single instance exception, include the original event details
         updateBody = {
           ...updateBody,
           recurringEventId: eventId,
@@ -105,15 +105,50 @@ serve(async (req) => {
           reminders: eventDetails.reminders,
         };
       } else if (updateType === 'following') {
-        // For this and following, update the recurrence rule
-        const untilDate = new Date(date);
-        untilDate.setDate(untilDate.getDate() - 1);
-        const untilDateStr = untilDate.toISOString().split('T')[0].replace(/-/g, '');
+        console.log('Updating this and following events');
+        
+        // Create a new event series starting from the modified instance
+        method = 'POST';
+        updateEndpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+        
+        // Copy recurrence rule from original event
+        const recurrenceRule = eventDetails.recurrence[0];
+        
+        // Create new event with same recurrence pattern but starting from current instance
+        updateBody = {
+          ...updateBody,
+          summary: eventDetails.summary,
+          description: eventDetails.description,
+          location: eventDetails.location,
+          status: "confirmed",
+          attendees: eventDetails.attendees,
+          reminders: eventDetails.reminders,
+          recurrence: [recurrenceRule],
+        };
 
-        if (eventDetails.recurrence && eventDetails.recurrence[0]) {
-          const originalRule = eventDetails.recurrence[0];
-          const updatedRule = originalRule.replace(/;?UNTIL=[^;]+/, `;UNTIL=${untilDateStr}`);
-          updateBody.recurrence = [updatedRule];
+        // Update the original recurring event to end before this instance
+        const originalEventUpdateResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${tokenData.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              recurrence: [
+                recurrenceRule.replace(
+                  /;?(UNTIL=[^;]+)?$/,
+                  `;UNTIL=${new Date(date).toISOString().split('T')[0].replace(/-/g, '')}`
+                )
+              ]
+            }),
+          }
+        );
+
+        if (!originalEventUpdateResponse.ok) {
+          console.error('Failed to update original event series:', await originalEventUpdateResponse.json());
+          throw new Error('Failed to update original event series');
         }
       }
       // For 'series' type, use the default PATCH behavior to update the entire series
