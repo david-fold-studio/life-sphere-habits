@@ -121,20 +121,27 @@ export const fetchGoogleCalendarEvents = async (userId: string, weekStart: Date)
     const data = await response.json();
     console.log('Google Calendar events:', data);
 
-    // Create a map to track recurring events and their exceptions
+    // Create maps to track recurring events and their exceptions
     const eventMap = new Map();
+    const recurringEventExceptions = new Map();
 
     // First pass: Identify recurring events and their exceptions
     data.items.forEach((event: any) => {
-      const recurring_event_id = event.recurringEventId;
-      const isException = event.originalStartTime;
-
-      if (recurring_event_id && isException) {
+      if (event.recurringEventId && event.originalStartTime) {
         // This is an exception to a recurring event
+        recurringEventExceptions.set(event.recurringEventId, event.id);
         eventMap.set(event.id, event);
-      } else if (!recurring_event_id) {
+      } else if (!event.recurringEventId) {
         // This is either a single event or the original recurring event
         eventMap.set(event.id, event);
+      }
+    });
+
+    // Second pass: Filter out original instances that have exceptions
+    data.items.forEach((event: any) => {
+      if (event.recurrence && recurringEventExceptions.has(event.id)) {
+        // Skip the original recurring event instance if it has an exception
+        eventMap.delete(event.id);
       }
     });
 
